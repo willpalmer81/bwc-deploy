@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { StatusBadge } from "./status-badge";
 import { Modal, FormField, inputClass, selectClass, btnPrimary, btnDanger, btnSecondary } from "./modal";
+import { SelectWithCreate } from "./select-with-create";
 
 type SiteRow = {
   id: number;
@@ -288,20 +289,43 @@ export function SiteList() {
             <input className={inputClass} value={form.building_name} onChange={set("building_name")} placeholder="Optional" />
           </FormField>
           <FormField label="Client">
-            <select className={selectClass} value={form.client_id} onChange={set("client_id")}>
-              <option value="">Select client...</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+            <SelectWithCreate
+              value={form.client_id}
+              onChange={(v) => setForm((f) => ({ ...f, client_id: v }))}
+              options={clients}
+              entityName="Client"
+              apiEndpoint="/api/clients"
+              quickFields={[
+                { key: "name", label: "Name", placeholder: "e.g. Abbeyfield" },
+                { key: "routing_mode", label: "Routing Mode", type: "select", options: [
+                  { value: "direct_to_arc", label: "Direct to ARC" },
+                  { value: "via_skyresponse", label: "Via Skyresponse" },
+                  { value: "TBC", label: "TBC" },
+                ]},
+                { key: "alertacall_contact", label: "Contact", placeholder: "e.g. Kerry Surman" },
+              ]}
+              onCreated={() => fetch("/api/clients").then((r) => r.json()).then(setClients)}
+            />
           </FormField>
           <FormField label="Cohort">
-            <select className={selectClass} value={form.cohort_id} onChange={set("cohort_id")}>
-              <option value="">None</option>
-              {filteredCohorts.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+            <SelectWithCreate
+              value={form.cohort_id}
+              onChange={(v) => setForm((f) => ({ ...f, cohort_id: v }))}
+              options={filteredCohorts}
+              placeholder="None"
+              entityName="Cohort"
+              apiEndpoint="/api/cohorts"
+              quickFields={[
+                { key: "name", label: "Name", placeholder: "e.g. Cohort 1" },
+                { key: "status", label: "Status", type: "select", options: [
+                  { value: "planning", label: "Planning" },
+                  { value: "in_progress", label: "In Progress" },
+                  { value: "complete", label: "Complete" },
+                ]},
+              ]}
+              extraPayload={form.client_id ? { client_id: parseInt(form.client_id) } : undefined}
+              onCreated={() => fetch("/api/cohorts").then((r) => r.json()).then(setCohorts)}
+            />
           </FormField>
           <FormField label="Address">
             <input className={inputClass} value={form.address} onChange={set("address")} placeholder="Optional" />

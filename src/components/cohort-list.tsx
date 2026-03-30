@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { StatusBadge } from "./status-badge";
 import { Modal, FormField, inputClass, selectClass, btnPrimary, btnDanger, btnSecondary } from "./modal";
+import { SelectWithCreate } from "./select-with-create";
 
 type CohortRow = {
   id: number;
@@ -197,12 +198,23 @@ export function CohortList() {
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? "Edit Cohort" : "New Cohort"}>
         <FormField label="Client">
-          <select className={selectClass} value={form.client_id} onChange={set("client_id")}>
-            <option value="">Select client...</option>
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+          <SelectWithCreate
+            value={form.client_id}
+            onChange={(v) => setForm((f) => ({ ...f, client_id: v }))}
+            options={clients}
+            entityName="Client"
+            apiEndpoint="/api/clients"
+            quickFields={[
+              { key: "name", label: "Name", placeholder: "e.g. Abbeyfield" },
+              { key: "routing_mode", label: "Routing Mode", type: "select", options: [
+                { value: "direct_to_arc", label: "Direct to ARC" },
+                { value: "via_skyresponse", label: "Via Skyresponse" },
+                { value: "TBC", label: "TBC" },
+              ]},
+              { key: "alertacall_contact", label: "Contact", placeholder: "e.g. Kerry Surman" },
+            ]}
+            onCreated={() => fetch("/api/clients").then((r) => r.json()).then(setClients)}
+          />
         </FormField>
         <FormField label="Name">
           <input className={inputClass} value={form.name} onChange={set("name")} placeholder="e.g. Cohort 1" />
@@ -225,14 +237,15 @@ export function CohortList() {
         </div>
 
         <FormField label="ARC Provider">
-          <select className={selectClass} value={form.arc_id} onChange={set("arc_id")}>
-            <option value="">
-              {selectedClient?.arc_name ? `Inherited: ${selectedClient.arc_name}` : "Inherit from client"}
-            </option>
-            {arcs.map((a) => (
-              <option key={a.id} value={a.id}>{a.name}</option>
-            ))}
-          </select>
+          <SelectWithCreate
+            value={form.arc_id}
+            onChange={(v) => setForm((f) => ({ ...f, arc_id: v }))}
+            options={arcs}
+            placeholder={selectedClient?.arc_name ? `Inherited: ${selectedClient.arc_name}` : "Inherit from client"}
+            entityName="ARC"
+            apiEndpoint="/api/arcs"
+            onCreated={() => fetch("/api/arcs").then((r) => r.json()).then(setArcs)}
+          />
         </FormField>
         <FormField label="Routing Mode">
           <select className={selectClass} value={form.routing_mode} onChange={set("routing_mode")}>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Modal, FormField, inputClass, selectClass, btnPrimary, btnDanger, btnSecondary } from "./modal";
+import { SelectWithCreate } from "./select-with-create";
 
 type ClientRow = {
   id: number;
@@ -185,12 +186,14 @@ export function ClientList() {
           <input className={inputClass} value={form.name} onChange={set("name")} placeholder="e.g. Abbeyfield" />
         </FormField>
         <FormField label="ARC Provider">
-          <select className={selectClass} value={form.arc_id} onChange={set("arc_id")}>
-            <option value="">Select ARC...</option>
-            {arcs.map((a) => (
-              <option key={a.id} value={a.id}>{a.name}</option>
-            ))}
-          </select>
+          <SelectWithCreate
+            value={form.arc_id}
+            onChange={(v) => setForm((f) => ({ ...f, arc_id: v }))}
+            options={arcs}
+            entityName="ARC"
+            apiEndpoint="/api/arcs"
+            onCreated={() => fetch("/api/arcs").then((r) => r.json()).then(setArcs)}
+          />
         </FormField>
         <FormField label="Routing Mode">
           <select className={selectClass} value={form.routing_mode} onChange={set("routing_mode")}>
