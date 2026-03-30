@@ -57,12 +57,16 @@ export function SiteList() {
   const copyTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   function copyAddress(site: SiteRow) {
-    const parts = [
-      site.name,
-      site.building_name,
-      site.address,
-      site.postcode,
-    ].filter(Boolean);
+    const parts: string[] = [];
+    if (site.name) parts.push(site.name);
+    if (site.building_name) parts.push(site.building_name);
+    if (site.address) {
+      site.address.split(",").forEach((p) => {
+        const trimmed = p.trim();
+        if (trimmed) parts.push(trimmed);
+      });
+    }
+    if (site.postcode) parts.push(site.postcode);
     navigator.clipboard.writeText(parts.join("\n"));
     setCopiedId(site.id);
     clearTimeout(copyTimer.current);
