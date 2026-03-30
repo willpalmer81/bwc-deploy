@@ -12,7 +12,7 @@ export function StatCard({
       <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2">
         {label}
       </p>
-      <p className="text-3xl font-display font-bold text-zinc-100 tracking-tight">
+      <p className="text-3xl font-display font-bold text-zinc-100 tracking-tight" style={{ fontVariantNumeric: "tabular-nums" }}>
         {value}
       </p>
       {sub && (
