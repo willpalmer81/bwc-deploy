@@ -10,12 +10,12 @@ export async function PUT(request: Request, ctx: Ctx) {
   const sql = getDb();
   const body = await request.json();
   const {
-    client_id, cohort_id, name, building_name, address, postcode,
+    org_id, cohort_id, name, building_name, address, postcode,
     residential_units, communal_units, dmp_group_name, dmp_group_uuid, status, notes,
   } = body;
   const result = await sql`
     UPDATE sites SET
-      client_id = ${client_id},
+      org_id = ${org_id},
       cohort_id = ${cohort_id || null},
       name = ${name},
       building_name = ${building_name || null},

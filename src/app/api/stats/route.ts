@@ -7,7 +7,7 @@ export async function GET() {
   const sql = getDb();
 
   const [clients, sites, statusCounts] = await Promise.all([
-    sql`SELECT count(*)::int as count FROM clients`,
+    sql`SELECT count(*)::int as count FROM organisations WHERE type = 'client'`,
     sql`SELECT count(*)::int as count FROM sites`,
     sql`SELECT status, count(*)::int as count FROM sites GROUP BY status ORDER BY status`,
   ]);

@@ -7,7 +7,7 @@ import { SelectWithCreate } from "./select-with-create";
 
 type SiteRow = {
   id: number;
-  client_id: number;
+  org_id: number;
   cohort_id: number | null;
   name: string;
   building_name: string | null;
@@ -26,11 +26,11 @@ type SiteRow = {
   effective_contact: string;
 };
 
-type ClientOption = { id: number; name: string };
-type CohortOption = { id: number; name: string; client_id: number };
+type OrgOption = { id: number; name: string; type: string };
+type CohortOption = { id: number; name: string; org_id: number };
 
 const emptySite = {
-  client_id: "",
+  org_id: "",
   cohort_id: "",
   name: "",
   building_name: "",
@@ -46,10 +46,10 @@ const emptySite = {
 
 export function SiteList() {
   const [sites, setSites] = useState<SiteRow[]>([]);
-  const [clients, setClients] = useState<ClientOption[]>([]);
+  const [orgs, setOrgs] = useState<OrgOption[]>([]);
   const [cohorts, setCohorts] = useState<CohortOption[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ client_id: "", status: "", search: "" });
+  const [filters, setFilters] = useState({ org_id: "", status: "", search: "" });
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<SiteRow | null>(null);
   const [form, setForm] = useState(emptySite);
@@ -77,7 +77,7 @@ export function SiteList() {
   const fetchSites = useCallback(() => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (filters.client_id) params.set("client_id", filters.client_id);
+    if (filters.org_id) params.set("org_id", filters.org_id);
     if (filters.status) params.set("status", filters.status);
     if (filters.search) params.set("search", filters.search);
     fetch(`/api/sites?${params}`)
@@ -87,9 +87,9 @@ export function SiteList() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/clients").then((r) => r.json()),
+      fetch("/api/organisations").then((r) => r.json()),
       fetch("/api/cohorts").then((r) => r.json()),
-    ]).then(([c, co]) => { setClients(c); setCohorts(co); });
+    ]).then(([o, co]) => { setOrgs(o); setCohorts(co); });
   }, []);
 
   useEffect(() => {
@@ -106,7 +106,7 @@ export function SiteList() {
   function openEdit(site: SiteRow) {
     setEditing(site);
     setForm({
-      client_id: String(site.client_id),
+      org_id: String(site.org_id),
       cohort_id: site.cohort_id ? String(site.cohort_id) : "",
       name: site.name,
       building_name: site.building_name ?? "",
@@ -125,7 +125,7 @@ export function SiteList() {
   async function handleSave() {
     const payload = {
       ...form,
-      client_id: parseInt(form.client_id),
+      org_id: parseInt(form.org_id),
       cohort_id: form.cohort_id ? parseInt(form.cohort_id) : null,
       residential_units: form.residential_units ? parseInt(form.residential_units) : null,
       communal_units: form.communal_units ? parseInt(form.communal_units) : null,
@@ -151,8 +151,9 @@ export function SiteList() {
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [field]: e.target.value }));
 
-  const filteredCohorts = form.client_id
-    ? cohorts.filter((c) => c.client_id === parseInt(form.client_id))
+  const clientOrgs = orgs.filter((o) => o.type === "client");
+  const filteredCohorts = form.org_id
+    ? cohorts.filter((c) => c.org_id === parseInt(form.org_id))
     : cohorts;
 
   return (
@@ -167,13 +168,13 @@ export function SiteList() {
             className={`${inputClass} w-64`}
           />
           <select
-            value={filters.client_id}
-            onChange={(e) => setFilters((f) => ({ ...f, client_id: e.target.value }))}
+            value={filters.org_id}
+            onChange={(e) => setFilters((f) => ({ ...f, org_id: e.target.value }))}
             className={selectClass}
           >
             <option value="">All clients</option>
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+            {clientOrgs.map((o) => (
+              <option key={o.id} value={o.id}>{o.name}</option>
             ))}
           </select>
           <select
@@ -290,21 +291,16 @@ export function SiteList() {
           </FormField>
           <FormField label="Client">
             <SelectWithCreate
-              value={form.client_id}
-              onChange={(v) => setForm((f) => ({ ...f, client_id: v }))}
-              options={clients}
-              entityName="Client"
-              apiEndpoint="/api/clients"
+              value={form.org_id}
+              onChange={(v) => setForm((f) => ({ ...f, org_id: v }))}
+              options={clientOrgs}
+              entityName="Organisation"
+              apiEndpoint="/api/organisations"
               quickFields={[
                 { key: "name", label: "Name", placeholder: "e.g. Abbeyfield" },
-                { key: "routing_mode", label: "Routing Mode", type: "select", options: [
-                  { value: "direct_to_arc", label: "Direct to ARC" },
-                  { value: "via_skyresponse", label: "Via Skyresponse" },
-                  { value: "TBC", label: "TBC" },
-                ]},
-                { key: "alertacall_contact", label: "Contact", placeholder: "e.g. Kerry Surman" },
               ]}
-              onCreated={() => fetch("/api/clients").then((r) => r.json()).then(setClients)}
+              extraPayload={{ type: "client", routing_mode: "TBC" }}
+              onCreated={() => fetch("/api/organisations").then((r) => r.json()).then(setOrgs)}
             />
           </FormField>
           <FormField label="Cohort">
@@ -318,7 +314,7 @@ export function SiteList() {
               quickFields={[
                 { key: "name", label: "Name", placeholder: "e.g. Cohort 1" },
               ]}
-              extraPayload={form.client_id ? { client_id: parseInt(form.client_id) } : undefined}
+              extraPayload={form.org_id ? { org_id: parseInt(form.org_id) } : undefined}
               onCreated={() => fetch("/api/cohorts").then((r) => r.json()).then(setCohorts)}
             />
           </FormField>
@@ -353,7 +349,7 @@ export function SiteList() {
         </FormField>
         <div className="flex gap-3 justify-end mt-4">
           <button onClick={() => setModalOpen(false)} className={btnSecondary}>Cancel</button>
-          <button onClick={handleSave} className={btnPrimary} disabled={!form.name || !form.client_id}>
+          <button onClick={handleSave} className={btnPrimary} disabled={!form.name || !form.org_id}>
             {editing ? "Save Changes" : "Create Site"}
           </button>
         </div>

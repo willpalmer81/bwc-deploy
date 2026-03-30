@@ -9,12 +9,12 @@ export async function PUT(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const sql = getDb();
   const body = await request.json();
-  const { client_id, name, arc_id, routing_mode, contact_id, notes } = body;
+  const { org_id, name, arc_org_id, routing_mode, contact_id, notes } = body;
   const result = await sql`
     UPDATE cohorts SET
-      client_id = ${client_id},
+      org_id = ${org_id},
       name = ${name},
-      arc_id = ${arc_id || null},
+      arc_org_id = ${arc_org_id || null},
       routing_mode = ${routing_mode || null},
       contact_id = ${contact_id || null},
       notes = ${notes || null}

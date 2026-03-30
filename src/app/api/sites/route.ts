@@ -7,28 +7,28 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   const sql = getDb();
   const { searchParams } = request.nextUrl;
-  const clientId = searchParams.get("client_id");
+  const orgId = searchParams.get("org_id");
   const status = searchParams.get("status");
   const search = searchParams.get("search");
 
-  // Fetch all with resolved config (cohort overrides client), filter in JS since dataset is small
   const allSites = await sql`
-    SELECT s.*, c.name as client_name, co.name as cohort_name,
+    SELECT s.*, o.name as client_name, co.name as cohort_name,
       COALESCE(coa.name, ca.name) as effective_arc,
-      COALESCE(co.routing_mode, c.routing_mode) as effective_routing_mode,
+      COALESCE(co.routing_mode, cd.routing_mode) as effective_routing_mode,
       COALESCE(cop.name, cp.name) as effective_contact
     FROM sites s
-    JOIN clients c ON s.client_id = c.id
+    JOIN organisations o ON s.org_id = o.id
+    LEFT JOIN org_client_details cd ON cd.org_id = o.id
     LEFT JOIN cohorts co ON s.cohort_id = co.id
-    LEFT JOIN arcs ca ON c.arc_id = ca.id
-    LEFT JOIN arcs coa ON co.arc_id = coa.id
-    LEFT JOIN people cp ON c.contact_id = cp.id
+    LEFT JOIN organisations ca ON cd.arc_org_id = ca.id
+    LEFT JOIN organisations coa ON co.arc_org_id = coa.id
+    LEFT JOIN people cp ON cd.contact_id = cp.id
     LEFT JOIN people cop ON co.contact_id = cop.id
-    ORDER BY c.name, co.name NULLS FIRST, s.name
+    ORDER BY o.name, co.name NULLS FIRST, s.name
   `;
 
   const filtered = allSites.filter((site) => {
-    if (clientId && site.client_id !== parseInt(clientId)) return false;
+    if (orgId && site.org_id !== parseInt(orgId)) return false;
     if (status && site.status !== status) return false;
     if (search) {
       const q = search.toLowerCase();
@@ -48,13 +48,13 @@ export async function POST(request: Request) {
   const sql = getDb();
   const body = await request.json();
   const {
-    client_id, cohort_id, name, building_name, address, postcode,
+    org_id, cohort_id, name, building_name, address, postcode,
     residential_units, communal_units, dmp_group_name, dmp_group_uuid, status, notes,
   } = body;
   const result = await sql`
-    INSERT INTO sites (client_id, cohort_id, name, building_name, address, postcode,
+    INSERT INTO sites (org_id, cohort_id, name, building_name, address, postcode,
       residential_units, communal_units, dmp_group_name, dmp_group_uuid, status, notes)
-    VALUES (${client_id}, ${cohort_id || null}, ${name}, ${building_name || null},
+    VALUES (${org_id}, ${cohort_id || null}, ${name}, ${building_name || null},
       ${address || null}, ${postcode || null}, ${residential_units || null},
       ${communal_units || null}, ${dmp_group_name || null}, ${dmp_group_uuid || null},
       ${status}, ${notes || null})

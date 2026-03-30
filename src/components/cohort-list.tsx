@@ -6,9 +6,9 @@ import { SelectWithCreate } from "./select-with-create";
 
 type CohortRow = {
   id: number;
-  client_id: number;
+  org_id: number;
   name: string;
-  arc_id: number | null;
+  arc_org_id: number | null;
   arc_name: string | null;
   routing_mode: string | null;
   contact_id: number | null;
@@ -16,18 +16,18 @@ type CohortRow = {
   notes: string | null;
   client_name: string;
   client_arc_name: string | null;
-  client_routing_mode: string;
+  client_routing_mode: string | null;
   client_contact_name: string | null;
   site_count: number;
 };
 
-type ClientOption = { id: number; name: string; arc_id: number | null; arc_name: string | null; routing_mode: string; contact_id: number | null; contact_name: string | null };
-type ArcOption = { id: number; name: string };
+type OrgOption = { id: number; name: string; type: string; arc_name?: string | null; routing_mode?: string | null; contact_name?: string | null };
+type PersonOption = { id: number; name: string };
 
 const emptyCohort = {
-  client_id: "",
+  org_id: "",
   name: "",
-  arc_id: "",
+  arc_org_id: "",
   routing_mode: "",
   contact_id: "",
   notes: "",
@@ -35,25 +35,25 @@ const emptyCohort = {
 
 export function CohortList() {
   const [cohorts, setCohorts] = useState<CohortRow[]>([]);
-  const [clients, setClients] = useState<ClientOption[]>([]);
-  const [arcs, setArcs] = useState<ArcOption[]>([]);
-  const [people, setPeople] = useState<ArcOption[]>([]);
+  const [orgs, setOrgs] = useState<OrgOption[]>([]);
+  const [people, setPeople] = useState<PersonOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<CohortRow | null>(null);
   const [form, setForm] = useState(emptyCohort);
   const [deleting, setDeleting] = useState<CohortRow | null>(null);
 
+  const clientOrgs = orgs.filter((o) => o.type === "client");
+  const arcOrgs = orgs.filter((o) => o.type === "arc");
+
   const load = useCallback(() => {
     Promise.all([
       fetch("/api/cohorts").then((r) => r.json()),
-      fetch("/api/clients").then((r) => r.json()),
-      fetch("/api/arcs").then((r) => r.json()),
+      fetch("/api/organisations").then((r) => r.json()),
       fetch("/api/people").then((r) => r.json()),
-    ]).then(([co, cl, a, p]) => {
+    ]).then(([co, o, p]) => {
       setCohorts(co);
-      setClients(cl);
-      setArcs(a);
+      setOrgs(o);
       setPeople(p);
       setLoading(false);
     });
@@ -70,9 +70,9 @@ export function CohortList() {
   function openEdit(cohort: CohortRow) {
     setEditing(cohort);
     setForm({
-      client_id: String(cohort.client_id),
+      org_id: String(cohort.org_id),
       name: cohort.name,
-      arc_id: cohort.arc_id ? String(cohort.arc_id) : "",
+      arc_org_id: cohort.arc_org_id ? String(cohort.arc_org_id) : "",
       routing_mode: cohort.routing_mode ?? "",
       contact_id: cohort.contact_id ? String(cohort.contact_id) : "",
       notes: cohort.notes ?? "",
@@ -83,8 +83,8 @@ export function CohortList() {
   async function handleSave() {
     const payload = {
       ...form,
-      client_id: parseInt(form.client_id),
-      arc_id: form.arc_id ? parseInt(form.arc_id) : null,
+      org_id: parseInt(form.org_id),
+      arc_org_id: form.arc_org_id ? parseInt(form.arc_org_id) : null,
       contact_id: form.contact_id ? parseInt(form.contact_id) : null,
     };
     const method = editing ? "PUT" : "POST";
@@ -108,7 +108,7 @@ export function CohortList() {
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [field]: e.target.value }));
 
-  const selectedClient = clients.find((c) => c.id === parseInt(form.client_id));
+  const selectedClient = orgs.find((o) => o.id === parseInt(form.org_id));
 
   if (loading) {
     return (
@@ -160,7 +160,9 @@ export function CohortList() {
                         {cohort.routing_mode && (
                           <span className="text-amber-400/80">
                             Routing: {cohort.routing_mode.replace(/_/g, " ")}
-                            <span className="text-zinc-600 ml-1">(overrides {cohort.client_routing_mode.replace(/_/g, " ")})</span>
+                            {cohort.client_routing_mode && (
+                              <span className="text-zinc-600 ml-1">(overrides {cohort.client_routing_mode.replace(/_/g, " ")})</span>
+                            )}
                           </span>
                         )}
                         {cohort.contact_name && (
@@ -201,26 +203,22 @@ export function CohortList() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? "Edit Cohort" : "New Cohort"}>
         <FormField label="Client">
           <SelectWithCreate
-            value={form.client_id}
-            onChange={(v) => setForm((f) => ({ ...f, client_id: v }))}
-            options={clients}
-            entityName="Client"
-            apiEndpoint="/api/clients"
+            value={form.org_id}
+            onChange={(v) => setForm((f) => ({ ...f, org_id: v }))}
+            options={clientOrgs}
+            entityName="Organisation"
+            apiEndpoint="/api/organisations"
             quickFields={[
               { key: "name", label: "Name", placeholder: "e.g. Abbeyfield" },
-              { key: "routing_mode", label: "Routing Mode", type: "select", options: [
-                { value: "direct_to_arc", label: "Direct to ARC" },
-                { value: "via_skyresponse", label: "Via Skyresponse" },
-                { value: "TBC", label: "TBC" },
-              ]},
-              { key: "alertacall_contact", label: "Contact", placeholder: "e.g. Kerry Surman" },
             ]}
-            onCreated={() => fetch("/api/clients").then((r) => r.json()).then(setClients)}
+            extraPayload={{ type: "client", routing_mode: "TBC" }}
+            onCreated={load}
           />
         </FormField>
         <FormField label="Name">
           <input className={inputClass} value={form.name} onChange={set("name")} placeholder="e.g. Cohort 1" />
         </FormField>
+
         <div className="mt-6 mb-4 border-t border-zinc-800/60 pt-4">
           <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">
             Config Overrides
@@ -232,19 +230,23 @@ export function CohortList() {
 
         <FormField label="ARC Provider">
           <SelectWithCreate
-            value={form.arc_id}
-            onChange={(v) => setForm((f) => ({ ...f, arc_id: v }))}
-            options={arcs}
+            value={form.arc_org_id}
+            onChange={(v) => setForm((f) => ({ ...f, arc_org_id: v }))}
+            options={arcOrgs}
             placeholder={selectedClient?.arc_name ? `Inherited: ${selectedClient.arc_name}` : "Inherit from client"}
-            entityName="ARC"
-            apiEndpoint="/api/arcs"
-            onCreated={() => fetch("/api/arcs").then((r) => r.json()).then(setArcs)}
+            entityName="Organisation"
+            apiEndpoint="/api/organisations"
+            quickFields={[
+              { key: "name", label: "Name", placeholder: "e.g. Appello" },
+            ]}
+            extraPayload={{ type: "arc" }}
+            onCreated={load}
           />
         </FormField>
         <FormField label="Routing Mode">
           <select className={selectClass} value={form.routing_mode} onChange={set("routing_mode")}>
             <option value="">
-              {selectedClient ? `Inherited: ${selectedClient.routing_mode.replace(/_/g, " ")}` : "Inherit from client"}
+              {selectedClient?.routing_mode ? `Inherited: ${selectedClient.routing_mode.replace(/_/g, " ")}` : "Inherit from client"}
             </option>
             <option value="direct_to_arc">Direct to ARC</option>
             <option value="via_skyresponse">Via Skyresponse</option>
@@ -272,7 +274,7 @@ export function CohortList() {
         </FormField>
         <div className="flex gap-3 justify-end mt-4">
           <button onClick={() => setModalOpen(false)} className={btnSecondary}>Cancel</button>
-          <button onClick={handleSave} className={btnPrimary} disabled={!form.name || !form.client_id}>
+          <button onClick={handleSave} className={btnPrimary} disabled={!form.name || !form.org_id}>
             {editing ? "Save Changes" : "Create Cohort"}
           </button>
         </div>

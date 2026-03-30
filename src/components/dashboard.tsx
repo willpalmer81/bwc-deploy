@@ -11,11 +11,12 @@ type Stats = {
   byStatus: { status: string; count: number }[];
 };
 
-type ClientRow = {
+type OrgRow = {
   id: number;
   name: string;
+  type: string;
   arc_name: string | null;
-  routing_mode: string;
+  routing_mode: string | null;
   contact_name: string | null;
   site_count: number;
   live_count: number;
@@ -35,13 +36,13 @@ type SiteRow = {
 
 export function Dashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
-  const [clients, setClients] = useState<ClientRow[]>([]);
+  const [clients, setClients] = useState<OrgRow[]>([]);
   const [recentSites, setRecentSites] = useState<SiteRow[]>([]);
 
   useEffect(() => {
     Promise.all([
       fetch("/api/stats").then((r) => r.json()),
-      fetch("/api/clients").then((r) => r.json()),
+      fetch("/api/organisations").then((r) => r.json()).then((orgs: OrgRow[]) => orgs.filter((o) => o.type === "client")),
       fetch("/api/sites?status=in_progress").then((r) => r.json()),
     ]).then(([s, c, sites]) => {
       setStats(s);
@@ -134,7 +135,7 @@ export function Dashboard() {
               Clients
             </h2>
             <Link
-              href="/clients"
+              href="/organisations"
               className="text-xs text-zinc-500 hover:text-emerald-400 transition-colors"
             >
               View all
@@ -151,7 +152,7 @@ export function Dashboard() {
                     {client.name}
                   </p>
                   <p className="text-xs text-zinc-500">
-                    ARC: {client.arc_name ?? "—"} &middot; {client.routing_mode.replace(/_/g, " ")}
+                    ARC: {client.arc_name ?? "—"} &middot; {(client.routing_mode ?? "TBC").replace(/_/g, " ")}
                   </p>
                 </div>
                 <div className="text-right">
