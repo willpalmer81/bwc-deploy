@@ -14,7 +14,7 @@ type Stats = {
 type ClientRow = {
   id: number;
   name: string;
-  arc: string;
+  arc_name: string | null;
   routing_mode: string;
   alertacall_contact: string;
   site_count: number;
@@ -151,7 +151,7 @@ export function Dashboard() {
                     {client.name}
                   </p>
                   <p className="text-xs text-zinc-500">
-                    ARC: {client.arc} &middot; {client.routing_mode.replace(/_/g, " ")}
+                    ARC: {client.arc_name ?? "—"} &middot; {client.routing_mode.replace(/_/g, " ")}
                   </p>
                 </div>
                 <div className="text-right">

@@ -8,7 +8,7 @@ export function getDb() {
 export type Client = {
   id: number;
   name: string;
-  arc: string;
+  arc_id: number | null;
   routing_mode: string;
   alertacall_contact: string;
   notes: string | null;
@@ -19,7 +19,7 @@ export type Cohort = {
   client_id: number;
   name: string;
   status: string;
-  arc: string | null;
+  arc_id: number | null;
   routing_mode: string | null;
   alertacall_contact: string | null;
   notes: string | null;

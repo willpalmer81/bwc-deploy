@@ -9,24 +9,26 @@ type CohortRow = {
   client_id: number;
   name: string;
   status: string;
-  arc: string | null;
+  arc_id: number | null;
+  arc_name: string | null;
   routing_mode: string | null;
   alertacall_contact: string | null;
   notes: string | null;
   client_name: string;
-  client_arc: string;
+  client_arc_name: string | null;
   client_routing_mode: string;
   client_alertacall_contact: string;
   site_count: number;
 };
 
-type ClientOption = { id: number; name: string; arc: string; routing_mode: string; alertacall_contact: string };
+type ClientOption = { id: number; name: string; arc_id: number | null; arc_name: string | null; routing_mode: string; alertacall_contact: string };
+type ArcOption = { id: number; name: string };
 
 const emptyCohort = {
   client_id: "",
   name: "",
   status: "planning",
-  arc: "",
+  arc_id: "",
   routing_mode: "",
   alertacall_contact: "",
   notes: "",
@@ -35,6 +37,7 @@ const emptyCohort = {
 export function CohortList() {
   const [cohorts, setCohorts] = useState<CohortRow[]>([]);
   const [clients, setClients] = useState<ClientOption[]>([]);
+  const [arcs, setArcs] = useState<ArcOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<CohortRow | null>(null);
@@ -45,9 +48,11 @@ export function CohortList() {
     Promise.all([
       fetch("/api/cohorts").then((r) => r.json()),
       fetch("/api/clients").then((r) => r.json()),
-    ]).then(([co, cl]) => {
+      fetch("/api/arcs").then((r) => r.json()),
+    ]).then(([co, cl, a]) => {
       setCohorts(co);
       setClients(cl);
+      setArcs(a);
       setLoading(false);
     });
   }, []);
@@ -66,7 +71,7 @@ export function CohortList() {
       client_id: String(cohort.client_id),
       name: cohort.name,
       status: cohort.status,
-      arc: cohort.arc ?? "",
+      arc_id: cohort.arc_id ? String(cohort.arc_id) : "",
       routing_mode: cohort.routing_mode ?? "",
       alertacall_contact: cohort.alertacall_contact ?? "",
       notes: cohort.notes ?? "",
@@ -75,7 +80,11 @@ export function CohortList() {
   }
 
   async function handleSave() {
-    const payload = { ...form, client_id: parseInt(form.client_id) };
+    const payload = {
+      ...form,
+      client_id: parseInt(form.client_id),
+      arc_id: form.arc_id ? parseInt(form.arc_id) : null,
+    };
     const method = editing ? "PUT" : "POST";
     const url = editing ? `/api/cohorts/${editing.id}` : "/api/cohorts";
     await fetch(url, {
@@ -97,7 +106,6 @@ export function CohortList() {
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [field]: e.target.value }));
 
-  // Get client defaults for placeholder hints
   const selectedClient = clients.find((c) => c.id === parseInt(form.client_id));
 
   if (loading) {
@@ -123,7 +131,7 @@ export function CohortList() {
       ) : (
         <div className="grid gap-4">
           {cohorts.map((cohort) => {
-            const hasOverrides = cohort.arc || cohort.routing_mode || cohort.alertacall_contact;
+            const hasOverrides = cohort.arc_name || cohort.routing_mode || cohort.alertacall_contact;
             return (
               <div
                 key={cohort.id}
@@ -140,10 +148,12 @@ export function CohortList() {
                     </p>
                     {hasOverrides && (
                       <div className="flex flex-wrap gap-x-5 gap-y-1 mt-2 text-xs">
-                        {cohort.arc && (
+                        {cohort.arc_name && (
                           <span className="text-amber-400/80">
-                            ARC: {cohort.arc}
-                            <span className="text-zinc-600 ml-1">(overrides {cohort.client_arc})</span>
+                            ARC: {cohort.arc_name}
+                            {cohort.client_arc_name && (
+                              <span className="text-zinc-600 ml-1">(overrides {cohort.client_arc_name})</span>
+                            )}
                           </span>
                         )}
                         {cohort.routing_mode && (
@@ -205,7 +215,6 @@ export function CohortList() {
           </select>
         </FormField>
 
-        {/* Override section */}
         <div className="mt-6 mb-4 border-t border-zinc-800/60 pt-4">
           <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">
             Config Overrides
@@ -216,12 +225,14 @@ export function CohortList() {
         </div>
 
         <FormField label="ARC Provider">
-          <input
-            className={inputClass}
-            value={form.arc}
-            onChange={set("arc")}
-            placeholder={selectedClient ? `Inherited: ${selectedClient.arc}` : "Select a client first"}
-          />
+          <select className={selectClass} value={form.arc_id} onChange={set("arc_id")}>
+            <option value="">
+              {selectedClient?.arc_name ? `Inherited: ${selectedClient.arc_name}` : "Inherit from client"}
+            </option>
+            {arcs.map((a) => (
+              <option key={a.id} value={a.id}>{a.name}</option>
+            ))}
+          </select>
         </FormField>
         <FormField label="Routing Mode">
           <select className={selectClass} value={form.routing_mode} onChange={set("routing_mode")}>

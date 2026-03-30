@@ -9,14 +9,9 @@ export async function PUT(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const sql = getDb();
   const body = await request.json();
-  const { name, arc_id, routing_mode, alertacall_contact, notes } = body;
+  const { name, notes } = body;
   const result = await sql`
-    UPDATE clients SET
-      name = ${name},
-      arc_id = ${arc_id || null},
-      routing_mode = ${routing_mode},
-      alertacall_contact = ${alertacall_contact},
-      notes = ${notes || null}
+    UPDATE arcs SET name = ${name}, notes = ${notes || null}
     WHERE id = ${parseInt(id)}
     RETURNING *
   `;
@@ -27,8 +22,9 @@ export async function PUT(request: Request, ctx: Ctx) {
 export async function DELETE(_request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const sql = getDb();
-  await sql`DELETE FROM sites WHERE client_id = ${parseInt(id)}`;
-  await sql`DELETE FROM cohorts WHERE client_id = ${parseInt(id)}`;
-  await sql`DELETE FROM clients WHERE id = ${parseInt(id)}`;
+  // Unlink clients and cohorts referencing this ARC
+  await sql`UPDATE clients SET arc_id = NULL WHERE arc_id = ${parseInt(id)}`;
+  await sql`UPDATE cohorts SET arc_id = NULL WHERE arc_id = ${parseInt(id)}`;
+  await sql`DELETE FROM arcs WHERE id = ${parseInt(id)}`;
   return NextResponse.json({ ok: true });
 }

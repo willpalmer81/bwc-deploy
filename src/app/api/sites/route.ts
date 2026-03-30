@@ -14,12 +14,14 @@ export async function GET(request: NextRequest) {
   // Fetch all with resolved config (cohort overrides client), filter in JS since dataset is small
   const allSites = await sql`
     SELECT s.*, c.name as client_name, co.name as cohort_name,
-      COALESCE(co.arc, c.arc) as effective_arc,
+      COALESCE(coa.name, ca.name) as effective_arc,
       COALESCE(co.routing_mode, c.routing_mode) as effective_routing_mode,
       COALESCE(co.alertacall_contact, c.alertacall_contact) as effective_contact
     FROM sites s
     JOIN clients c ON s.client_id = c.id
     LEFT JOIN cohorts co ON s.cohort_id = co.id
+    LEFT JOIN arcs ca ON c.arc_id = ca.id
+    LEFT JOIN arcs coa ON co.arc_id = coa.id
     ORDER BY c.name, co.name NULLS FIRST, s.name
   `;
 

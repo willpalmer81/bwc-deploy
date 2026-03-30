@@ -16,10 +16,18 @@ async function seed() {
   console.log("Creating tables...");
 
   await sql`
+    CREATE TABLE arcs (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      notes TEXT
+    )
+  `;
+
+  await sql`
     CREATE TABLE clients (
       id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
-      arc TEXT NOT NULL,
+      arc_id INTEGER REFERENCES arcs(id),
       routing_mode TEXT NOT NULL,
       alertacall_contact TEXT NOT NULL,
       notes TEXT
@@ -32,7 +40,7 @@ async function seed() {
       client_id INTEGER NOT NULL REFERENCES clients(id),
       name TEXT NOT NULL,
       status TEXT NOT NULL,
-      arc TEXT,
+      arc_id INTEGER REFERENCES arcs(id),
       routing_mode TEXT,
       alertacall_contact TEXT,
       notes TEXT

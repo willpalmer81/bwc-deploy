@@ -6,7 +6,8 @@ import { Modal, FormField, inputClass, selectClass, btnPrimary, btnDanger, btnSe
 type ClientRow = {
   id: number;
   name: string;
-  arc: string;
+  arc_id: number | null;
+  arc_name: string | null;
   routing_mode: string;
   alertacall_contact: string;
   notes: string | null;
@@ -14,9 +15,11 @@ type ClientRow = {
   live_count: number;
 };
 
+type ArcOption = { id: number; name: string };
+
 const emptyClient = {
   name: "",
-  arc: "",
+  arc_id: "",
   routing_mode: "direct_to_arc",
   alertacall_contact: "",
   notes: "",
@@ -24,6 +27,7 @@ const emptyClient = {
 
 export function ClientList() {
   const [clients, setClients] = useState<ClientRow[]>([]);
+  const [arcs, setArcs] = useState<ArcOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<ClientRow | null>(null);
@@ -31,12 +35,14 @@ export function ClientList() {
   const [deleting, setDeleting] = useState<ClientRow | null>(null);
 
   const load = useCallback(() => {
-    fetch("/api/clients")
-      .then((r) => r.json())
-      .then((data) => {
-        setClients(data);
-        setLoading(false);
-      });
+    Promise.all([
+      fetch("/api/clients").then((r) => r.json()),
+      fetch("/api/arcs").then((r) => r.json()),
+    ]).then(([c, a]) => {
+      setClients(c);
+      setArcs(a);
+      setLoading(false);
+    });
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -51,7 +57,7 @@ export function ClientList() {
     setEditing(client);
     setForm({
       name: client.name,
-      arc: client.arc,
+      arc_id: client.arc_id ? String(client.arc_id) : "",
       routing_mode: client.routing_mode,
       alertacall_contact: client.alertacall_contact,
       notes: client.notes ?? "",
@@ -60,12 +66,16 @@ export function ClientList() {
   }
 
   async function handleSave() {
+    const payload = {
+      ...form,
+      arc_id: form.arc_id ? parseInt(form.arc_id) : null,
+    };
     const method = editing ? "PUT" : "POST";
     const url = editing ? `/api/clients/${editing.id}` : "/api/clients";
     await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify(payload),
     });
     setModalOpen(false);
     load();
@@ -119,7 +129,7 @@ export function ClientList() {
                   </h2>
                   <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-sm text-zinc-500">
                     <span>
-                      ARC: <span className="text-zinc-300">{client.arc}</span>
+                      ARC: <span className="text-zinc-300">{client.arc_name ?? "Not set"}</span>
                     </span>
                     <span>
                       Routing:{" "}
@@ -166,7 +176,6 @@ export function ClientList() {
         </div>
       )}
 
-      {/* Create / Edit modal */}
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -176,7 +185,12 @@ export function ClientList() {
           <input className={inputClass} value={form.name} onChange={set("name")} placeholder="e.g. Abbeyfield" />
         </FormField>
         <FormField label="ARC Provider">
-          <input className={inputClass} value={form.arc} onChange={set("arc")} placeholder="e.g. Taking Care, Appello" />
+          <select className={selectClass} value={form.arc_id} onChange={set("arc_id")}>
+            <option value="">Select ARC...</option>
+            {arcs.map((a) => (
+              <option key={a.id} value={a.id}>{a.name}</option>
+            ))}
+          </select>
         </FormField>
         <FormField label="Routing Mode">
           <select className={selectClass} value={form.routing_mode} onChange={set("routing_mode")}>
@@ -195,13 +209,12 @@ export function ClientList() {
           <button onClick={() => setModalOpen(false)} className={btnSecondary}>
             Cancel
           </button>
-          <button onClick={handleSave} className={btnPrimary} disabled={!form.name || !form.arc}>
+          <button onClick={handleSave} className={btnPrimary} disabled={!form.name}>
             {editing ? "Save Changes" : "Create Client"}
           </button>
         </div>
       </Modal>
 
-      {/* Delete confirmation */}
       <Modal
         open={!!deleting}
         onClose={() => setDeleting(null)}
