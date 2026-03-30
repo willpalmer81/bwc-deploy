@@ -62,6 +62,7 @@ async function seed() {
       id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       address TEXT,
+      postcode TEXT,
       notes TEXT
     )
   `;

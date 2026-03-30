@@ -9,11 +9,12 @@ export async function PUT(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const sql = getDb();
   const body = await request.json();
-  const { name, address, notes } = body;
+  const { name, address, postcode, notes } = body;
   const result = await sql`
     UPDATE ac_sites SET
       name = ${name},
       address = ${address || null},
+      postcode = ${postcode || null},
       notes = ${notes || null}
     WHERE id = ${parseInt(id)}
     RETURNING *

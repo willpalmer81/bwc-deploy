@@ -12,10 +12,10 @@ export async function GET() {
 export async function POST(request: Request) {
   const sql = getDb();
   const body = await request.json();
-  const { name, address, notes } = body;
+  const { name, address, postcode, notes } = body;
   const result = await sql`
-    INSERT INTO ac_sites (name, address, notes)
-    VALUES (${name}, ${address || null}, ${notes || null})
+    INSERT INTO ac_sites (name, address, postcode, notes)
+    VALUES (${name}, ${address || null}, ${postcode || null}, ${notes || null})
     RETURNING *
   `;
   return NextResponse.json(result[0], { status: 201 });

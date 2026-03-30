@@ -7,10 +7,11 @@ type AcSiteRow = {
   id: number;
   name: string;
   address: string | null;
+  postcode: string | null;
   notes: string | null;
 };
 
-const emptyForm = { name: "", address: "", notes: "" };
+const emptyForm = { name: "", address: "", postcode: "", notes: "" };
 
 export function AcSiteList() {
   const [sites, setSites] = useState<AcSiteRow[]>([]);
@@ -39,6 +40,7 @@ export function AcSiteList() {
     setForm({
       name: site.name,
       address: site.address ?? "",
+      postcode: site.postcode ?? "",
       notes: site.notes ?? "",
     });
     setModalOpen(true);
@@ -93,6 +95,7 @@ export function AcSiteList() {
               <tr className="border-b border-zinc-800/80">
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Name</th>
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Address</th>
+                <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Postcode</th>
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Notes</th>
                 <th className="px-5 py-3 w-24"></th>
               </tr>
@@ -102,6 +105,7 @@ export function AcSiteList() {
                 <tr key={site.id} className="hover:bg-zinc-800/20 transition-colors group">
                   <td className="px-5 py-3 font-medium text-zinc-200">{site.name}</td>
                   <td className="px-5 py-3 text-zinc-400">{site.address ?? "\u2014"}</td>
+                  <td className="px-5 py-3 font-mono text-xs text-zinc-400">{site.postcode ?? "\u2014"}</td>
                   <td className="px-5 py-3 text-zinc-500 text-xs">{site.notes ?? "\u2014"}</td>
                   <td className="px-5 py-3">
                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -132,6 +136,9 @@ export function AcSiteList() {
         </FormField>
         <FormField label="Address">
           <input className={inputClass} value={form.address} onChange={set("address")} placeholder="Full address" />
+        </FormField>
+        <FormField label="Postcode">
+          <input className={inputClass} value={form.postcode} onChange={set("postcode")} placeholder="e.g. B1 1AA" />
         </FormField>
         <FormField label="Notes">
           <textarea className={inputClass} rows={2} value={form.notes} onChange={set("notes")} placeholder="Optional..." />
