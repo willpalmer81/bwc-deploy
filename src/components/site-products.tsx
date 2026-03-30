@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Modal, FormField, inputClass, btnPrimary, btnDanger, btnSecondary } from "./modal";
+import { Modal, FormField, inputClass, selectClass, btnPrimary, btnDanger, btnSecondary } from "./modal";
 import { SelectWithCreate } from "./select-with-create";
+import { StatusBadge } from "./status-badge";
 
 type PropertyValue = {
   property_id: number;
@@ -18,6 +19,7 @@ type SiteProductRow = {
   product_id: number;
   product_name: string;
   product_type: string | null;
+  status: string;
   notes: string | null;
   values: PropertyValue[];
 };
@@ -45,6 +47,7 @@ export function SiteProducts({ siteId }: { siteId: number }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<SiteProductRow | null>(null);
   const [formProductId, setFormProductId] = useState("");
+  const [formStatus, setFormStatus] = useState("planning");
   const [formNotes, setFormNotes] = useState("");
   const [formValues, setFormValues] = useState<Record<number, string>>({});
   const [deleting, setDeleting] = useState<SiteProductRow | null>(null);
@@ -64,6 +67,7 @@ export function SiteProducts({ siteId }: { siteId: number }) {
   function openAdd() {
     setEditing(null);
     setFormProductId("");
+    setFormStatus("planning");
     setFormNotes("");
     setFormValues({});
     setModalOpen(true);
@@ -72,6 +76,7 @@ export function SiteProducts({ siteId }: { siteId: number }) {
   function openEdit(item: SiteProductRow) {
     setEditing(item);
     setFormProductId(String(item.product_id));
+    setFormStatus(item.status);
     setFormNotes(item.notes ?? "");
     const vals: Record<number, string> = {};
     for (const v of item.values) {
@@ -83,7 +88,6 @@ export function SiteProducts({ siteId }: { siteId: number }) {
 
   function handleProductChange(productId: string) {
     setFormProductId(productId);
-    // Reset values when product changes (properties are different)
     if (!editing) setFormValues({});
   }
 
@@ -97,6 +101,7 @@ export function SiteProducts({ siteId }: { siteId: number }) {
     const payload = {
       site_id: siteId,
       product_id: parseInt(formProductId),
+      status: formStatus,
       values,
       notes: formNotes,
     };
@@ -111,6 +116,20 @@ export function SiteProducts({ siteId }: { siteId: number }) {
     load();
   }
 
+  async function handleStatusChange(item: SiteProductRow, newStatus: string) {
+    await fetch(`/api/site-products/${item.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        product_id: item.product_id,
+        status: newStatus,
+        values: item.values.map((v) => ({ property_id: v.property_id, value: v.value })),
+        notes: item.notes,
+      }),
+    });
+    load();
+  }
+
   async function handleDelete() {
     if (!deleting) return;
     await fetch(`/api/site-products/${deleting.id}`, { method: "DELETE" });
@@ -122,7 +141,6 @@ export function SiteProducts({ siteId }: { siteId: number }) {
     return <div className="text-xs text-zinc-500 py-2">Loading products...</div>;
   }
 
-  // Summary line: aggregate all values across all items
   const totalsByLabel: Record<string, number> = {};
   for (const item of items) {
     for (const v of item.values) {
@@ -133,6 +151,8 @@ export function SiteProducts({ siteId }: { siteId: number }) {
     }
   }
   const summaryParts = Object.entries(totalsByLabel).map(([label, total]) => `${total} ${label}`);
+  const liveCount = items.filter((i) => i.status === "live").length;
+  const totalCount = items.length;
 
   return (
     <>
@@ -140,9 +160,9 @@ export function SiteProducts({ siteId }: { siteId: number }) {
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
             Products
-            {summaryParts.length > 0 && (
+            {totalCount > 0 && (
               <span className="text-zinc-600 ml-2 normal-case">
-                ({summaryParts.join(" \u00b7 ")})
+                ({liveCount}/{totalCount} live{summaryParts.length > 0 ? ` \u00b7 ${summaryParts.join(" \u00b7 ")}` : ""})
               </span>
             )}
           </p>
@@ -163,10 +183,11 @@ export function SiteProducts({ siteId }: { siteId: number }) {
                 key={item.id}
                 className="flex items-center justify-between bg-zinc-800/30 rounded-lg px-3 py-2 group"
               >
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 flex items-center gap-2">
+                  <StatusBadge status={item.status} />
                   <span className="text-sm text-zinc-200">{item.product_name}</span>
                   {item.values.length > 0 && (
-                    <span className="text-xs text-zinc-500 ml-3 font-mono">
+                    <span className="text-xs text-zinc-500 font-mono">
                       {item.values
                         .filter((v) => parseInt(v.value) > 0)
                         .map((v) => `${v.value} ${v.label}`)
@@ -174,19 +195,30 @@ export function SiteProducts({ siteId }: { siteId: number }) {
                     </span>
                   )}
                 </div>
-                <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => openEdit(item)}
-                    className="px-1.5 py-0.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+                <div className="flex items-center gap-2">
+                  <select
+                    className="bg-transparent border-none text-xs text-zinc-500 cursor-pointer focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity"
+                    value={item.status}
+                    onChange={(e) => handleStatusChange(item, e.target.value)}
                   >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => setDeleting(item)}
-                    className="px-1.5 py-0.5 text-xs text-rose-400 hover:text-rose-300 transition-colors"
-                  >
-                    Del
-                  </button>
+                    <option value="planning">Planning</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="live">Live</option>
+                  </select>
+                  <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => openEdit(item)}
+                      className="px-1.5 py-0.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setDeleting(item)}
+                      className="px-1.5 py-0.5 text-xs text-rose-400 hover:text-rose-300 transition-colors"
+                    >
+                      Del
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -207,6 +239,14 @@ export function SiteProducts({ siteId }: { siteId: number }) {
             ]}
             onCreated={() => fetch("/api/products").then((r) => r.json()).then(setProducts)}
           />
+        </FormField>
+
+        <FormField label="Status">
+          <select className={selectClass} value={formStatus} onChange={(e) => setFormStatus(e.target.value)}>
+            <option value="planning">Planning</option>
+            <option value="in_progress">In Progress</option>
+            <option value="live">Live</option>
+          </select>
         </FormField>
 
         {selectedProduct && selectedProduct.properties.length > 0 && (

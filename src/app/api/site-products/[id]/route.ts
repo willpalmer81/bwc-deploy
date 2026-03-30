@@ -11,11 +11,12 @@ export async function PUT(request: Request, ctx: Ctx) {
   const spId = parseInt(id);
   const sql = getDb();
   const body = await request.json();
-  const { product_id, values, notes } = body;
+  const { product_id, values, status, notes } = body;
 
   const result = await sql`
     UPDATE site_products SET
       product_id = ${product_id},
+      status = ${status || "planning"},
       notes = ${notes || null}
     WHERE id = ${spId}
     RETURNING *

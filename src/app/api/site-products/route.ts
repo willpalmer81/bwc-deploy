@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const whereClause = siteId ? `WHERE sp.site_id = ${parseInt(siteId)}` : "";
 
   const rows = await sql`
-    SELECT sp.id, sp.site_id, sp.product_id, sp.notes,
+    SELECT sp.id, sp.site_id, sp.product_id, sp.status, sp.notes,
       p.model_name as product_name, p.type as product_type
     FROM site_products sp
     JOIN products p ON sp.product_id = p.id
@@ -49,11 +49,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: Request) {
   const sql = getDb();
   const body = await request.json();
-  const { site_id, product_id, values, notes } = body;
+  const { site_id, product_id, values, status, notes } = body;
 
   const result = await sql`
-    INSERT INTO site_products (site_id, product_id, notes)
-    VALUES (${site_id}, ${product_id}, ${notes || null})
+    INSERT INTO site_products (site_id, product_id, status, notes)
+    VALUES (${site_id}, ${product_id}, ${status || "planning"}, ${notes || null})
     RETURNING *
   `;
   const spId = result[0].id;
