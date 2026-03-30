@@ -11,6 +11,7 @@ async function seed() {
   await sql`DROP TABLE IF EXISTS sites CASCADE`;
   await sql`DROP TABLE IF EXISTS cohorts CASCADE`;
   await sql`DROP TABLE IF EXISTS clients CASCADE`;
+  await sql`DROP TABLE IF EXISTS ac_sites CASCADE`;
 
   console.log("Creating tables...");
 
@@ -52,6 +53,15 @@ async function seed() {
       dmp_group_name TEXT,
       dmp_group_uuid TEXT,
       status TEXT NOT NULL,
+      notes TEXT
+    )
+  `;
+
+  await sql`
+    CREATE TABLE ac_sites (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      address TEXT,
       notes TEXT
     )
   `;
