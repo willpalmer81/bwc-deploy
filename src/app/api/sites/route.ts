@@ -16,12 +16,14 @@ export async function GET(request: NextRequest) {
     SELECT s.*, c.name as client_name, co.name as cohort_name,
       COALESCE(coa.name, ca.name) as effective_arc,
       COALESCE(co.routing_mode, c.routing_mode) as effective_routing_mode,
-      COALESCE(co.alertacall_contact, c.alertacall_contact) as effective_contact
+      COALESCE(cop.name, cp.name) as effective_contact
     FROM sites s
     JOIN clients c ON s.client_id = c.id
     LEFT JOIN cohorts co ON s.cohort_id = co.id
     LEFT JOIN arcs ca ON c.arc_id = ca.id
     LEFT JOIN arcs coa ON co.arc_id = coa.id
+    LEFT JOIN people cp ON c.contact_id = cp.id
+    LEFT JOIN people cop ON co.contact_id = cop.id
     ORDER BY c.name, co.name NULLS FIRST, s.name
   `;
 

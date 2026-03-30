@@ -11,6 +11,8 @@ async function seed() {
   await sql`DROP TABLE IF EXISTS sites CASCADE`;
   await sql`DROP TABLE IF EXISTS cohorts CASCADE`;
   await sql`DROP TABLE IF EXISTS clients CASCADE`;
+  await sql`DROP TABLE IF EXISTS people CASCADE`;
+  await sql`DROP TABLE IF EXISTS arcs CASCADE`;
   await sql`DROP TABLE IF EXISTS ac_sites CASCADE`;
 
   console.log("Creating tables...");
@@ -24,12 +26,23 @@ async function seed() {
   `;
 
   await sql`
+    CREATE TABLE people (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT,
+      phone TEXT,
+      role TEXT,
+      notes TEXT
+    )
+  `;
+
+  await sql`
     CREATE TABLE clients (
       id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       arc_id INTEGER REFERENCES arcs(id),
       routing_mode TEXT NOT NULL,
-      alertacall_contact TEXT NOT NULL,
+      contact_id INTEGER REFERENCES people(id),
       notes TEXT
     )
   `;
@@ -42,7 +55,7 @@ async function seed() {
       status TEXT NOT NULL,
       arc_id INTEGER REFERENCES arcs(id),
       routing_mode TEXT,
-      alertacall_contact TEXT,
+      contact_id INTEGER REFERENCES people(id),
       notes TEXT
     )
   `;

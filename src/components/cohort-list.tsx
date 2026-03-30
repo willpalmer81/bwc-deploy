@@ -13,16 +13,17 @@ type CohortRow = {
   arc_id: number | null;
   arc_name: string | null;
   routing_mode: string | null;
-  alertacall_contact: string | null;
+  contact_id: number | null;
+  contact_name: string | null;
   notes: string | null;
   client_name: string;
   client_arc_name: string | null;
   client_routing_mode: string;
-  client_alertacall_contact: string;
+  client_contact_name: string | null;
   site_count: number;
 };
 
-type ClientOption = { id: number; name: string; arc_id: number | null; arc_name: string | null; routing_mode: string; alertacall_contact: string };
+type ClientOption = { id: number; name: string; arc_id: number | null; arc_name: string | null; routing_mode: string; contact_id: number | null; contact_name: string | null };
 type ArcOption = { id: number; name: string };
 
 const emptyCohort = {
@@ -31,7 +32,7 @@ const emptyCohort = {
   status: "planning",
   arc_id: "",
   routing_mode: "",
-  alertacall_contact: "",
+  contact_id: "",
   notes: "",
 };
 
@@ -39,6 +40,7 @@ export function CohortList() {
   const [cohorts, setCohorts] = useState<CohortRow[]>([]);
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [arcs, setArcs] = useState<ArcOption[]>([]);
+  const [people, setPeople] = useState<ArcOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<CohortRow | null>(null);
@@ -50,10 +52,12 @@ export function CohortList() {
       fetch("/api/cohorts").then((r) => r.json()),
       fetch("/api/clients").then((r) => r.json()),
       fetch("/api/arcs").then((r) => r.json()),
-    ]).then(([co, cl, a]) => {
+      fetch("/api/people").then((r) => r.json()),
+    ]).then(([co, cl, a, p]) => {
       setCohorts(co);
       setClients(cl);
       setArcs(a);
+      setPeople(p);
       setLoading(false);
     });
   }, []);
@@ -74,7 +78,7 @@ export function CohortList() {
       status: cohort.status,
       arc_id: cohort.arc_id ? String(cohort.arc_id) : "",
       routing_mode: cohort.routing_mode ?? "",
-      alertacall_contact: cohort.alertacall_contact ?? "",
+      contact_id: cohort.contact_id ? String(cohort.contact_id) : "",
       notes: cohort.notes ?? "",
     });
     setModalOpen(true);
@@ -85,6 +89,7 @@ export function CohortList() {
       ...form,
       client_id: parseInt(form.client_id),
       arc_id: form.arc_id ? parseInt(form.arc_id) : null,
+      contact_id: form.contact_id ? parseInt(form.contact_id) : null,
     };
     const method = editing ? "PUT" : "POST";
     const url = editing ? `/api/cohorts/${editing.id}` : "/api/cohorts";
@@ -132,7 +137,7 @@ export function CohortList() {
       ) : (
         <div className="grid gap-4">
           {cohorts.map((cohort) => {
-            const hasOverrides = cohort.arc_name || cohort.routing_mode || cohort.alertacall_contact;
+            const hasOverrides = cohort.arc_name || cohort.routing_mode || cohort.contact_name;
             return (
               <div
                 key={cohort.id}
@@ -163,10 +168,12 @@ export function CohortList() {
                             <span className="text-zinc-600 ml-1">(overrides {cohort.client_routing_mode.replace(/_/g, " ")})</span>
                           </span>
                         )}
-                        {cohort.alertacall_contact && (
+                        {cohort.contact_name && (
                           <span className="text-amber-400/80">
-                            Contact: {cohort.alertacall_contact}
-                            <span className="text-zinc-600 ml-1">(overrides {cohort.client_alertacall_contact})</span>
+                            Contact: {cohort.contact_name}
+                            {cohort.client_contact_name && (
+                              <span className="text-zinc-600 ml-1">(overrides {cohort.client_contact_name})</span>
+                            )}
                           </span>
                         )}
                       </div>
@@ -257,12 +264,19 @@ export function CohortList() {
             <option value="TBC">TBC</option>
           </select>
         </FormField>
-        <FormField label="Alertacall Contact">
-          <input
-            className={inputClass}
-            value={form.alertacall_contact}
-            onChange={set("alertacall_contact")}
-            placeholder={selectedClient ? `Inherited: ${selectedClient.alertacall_contact}` : "Select a client first"}
+        <FormField label="Contact">
+          <SelectWithCreate
+            value={form.contact_id}
+            onChange={(v) => setForm((f) => ({ ...f, contact_id: v }))}
+            options={people}
+            placeholder={selectedClient?.contact_name ? `Inherited: ${selectedClient.contact_name}` : "Inherit from client"}
+            entityName="Person"
+            apiEndpoint="/api/people"
+            quickFields={[
+              { key: "name", label: "Name", placeholder: "e.g. Kerry Surman" },
+              { key: "role", label: "Role", placeholder: "e.g. Project Manager" },
+            ]}
+            onCreated={() => fetch("/api/people").then((r) => r.json()).then(setPeople)}
           />
         </FormField>
 

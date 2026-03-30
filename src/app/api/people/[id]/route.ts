@@ -9,14 +9,11 @@ export async function PUT(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const sql = getDb();
   const body = await request.json();
-  const { name, arc_id, routing_mode, contact_id, notes } = body;
+  const { name, email, phone, role, notes } = body;
   const result = await sql`
-    UPDATE clients SET
-      name = ${name},
-      arc_id = ${arc_id || null},
-      routing_mode = ${routing_mode},
-      contact_id = ${contact_id || null},
-      notes = ${notes || null}
+    UPDATE people SET
+      name = ${name}, email = ${email || null}, phone = ${phone || null},
+      role = ${role || null}, notes = ${notes || null}
     WHERE id = ${parseInt(id)}
     RETURNING *
   `;
@@ -27,8 +24,8 @@ export async function PUT(request: Request, ctx: Ctx) {
 export async function DELETE(_request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const sql = getDb();
-  await sql`DELETE FROM sites WHERE client_id = ${parseInt(id)}`;
-  await sql`DELETE FROM cohorts WHERE client_id = ${parseInt(id)}`;
-  await sql`DELETE FROM clients WHERE id = ${parseInt(id)}`;
+  await sql`UPDATE clients SET contact_id = NULL WHERE contact_id = ${parseInt(id)}`;
+  await sql`UPDATE cohorts SET contact_id = NULL WHERE contact_id = ${parseInt(id)}`;
+  await sql`DELETE FROM people WHERE id = ${parseInt(id)}`;
   return NextResponse.json({ ok: true });
 }

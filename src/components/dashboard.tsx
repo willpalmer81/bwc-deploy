@@ -16,7 +16,7 @@ type ClientRow = {
   name: string;
   arc_name: string | null;
   routing_mode: string;
-  alertacall_contact: string;
+  contact_name: string | null;
   site_count: number;
   live_count: number;
 };

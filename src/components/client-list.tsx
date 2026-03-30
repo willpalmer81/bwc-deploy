@@ -10,25 +10,28 @@ type ClientRow = {
   arc_id: number | null;
   arc_name: string | null;
   routing_mode: string;
-  alertacall_contact: string;
+  contact_id: number | null;
+  contact_name: string | null;
   notes: string | null;
   site_count: number;
   live_count: number;
 };
 
 type ArcOption = { id: number; name: string };
+type PersonOption = { id: number; name: string };
 
 const emptyClient = {
   name: "",
   arc_id: "",
   routing_mode: "direct_to_arc",
-  alertacall_contact: "",
+  contact_id: "",
   notes: "",
 };
 
 export function ClientList() {
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [arcs, setArcs] = useState<ArcOption[]>([]);
+  const [people, setPeople] = useState<PersonOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<ClientRow | null>(null);
@@ -39,9 +42,11 @@ export function ClientList() {
     Promise.all([
       fetch("/api/clients").then((r) => r.json()),
       fetch("/api/arcs").then((r) => r.json()),
-    ]).then(([c, a]) => {
+      fetch("/api/people").then((r) => r.json()),
+    ]).then(([c, a, p]) => {
       setClients(c);
       setArcs(a);
+      setPeople(p);
       setLoading(false);
     });
   }, []);
@@ -60,7 +65,7 @@ export function ClientList() {
       name: client.name,
       arc_id: client.arc_id ? String(client.arc_id) : "",
       routing_mode: client.routing_mode,
-      alertacall_contact: client.alertacall_contact,
+      contact_id: client.contact_id ? String(client.contact_id) : "",
       notes: client.notes ?? "",
     });
     setModalOpen(true);
@@ -70,6 +75,7 @@ export function ClientList() {
     const payload = {
       ...form,
       arc_id: form.arc_id ? parseInt(form.arc_id) : null,
+      contact_id: form.contact_id ? parseInt(form.contact_id) : null,
     };
     const method = editing ? "PUT" : "POST";
     const url = editing ? `/api/clients/${editing.id}` : "/api/clients";
@@ -141,7 +147,7 @@ export function ClientList() {
                     <span>
                       Contact:{" "}
                       <span className="text-zinc-300">
-                        {client.alertacall_contact}
+                        {client.contact_name ?? "Not set"}
                       </span>
                     </span>
                   </div>
@@ -202,8 +208,20 @@ export function ClientList() {
             <option value="TBC">TBC</option>
           </select>
         </FormField>
-        <FormField label="Alertacall Contact">
-          <input className={inputClass} value={form.alertacall_contact} onChange={set("alertacall_contact")} placeholder="e.g. Kerry Surman" />
+        <FormField label="Primary Contact">
+          <SelectWithCreate
+            value={form.contact_id}
+            onChange={(v) => setForm((f) => ({ ...f, contact_id: v }))}
+            options={people}
+            entityName="Person"
+            apiEndpoint="/api/people"
+            quickFields={[
+              { key: "name", label: "Name", placeholder: "e.g. Kerry Surman" },
+              { key: "role", label: "Role", placeholder: "e.g. Project Manager" },
+              { key: "email", label: "Email", placeholder: "Optional" },
+            ]}
+            onCreated={() => fetch("/api/people").then((r) => r.json()).then(setPeople)}
+          />
         </FormField>
         <FormField label="Notes">
           <textarea className={inputClass} rows={3} value={form.notes} onChange={set("notes")} placeholder="Optional notes..." />

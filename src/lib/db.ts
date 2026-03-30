@@ -10,7 +10,7 @@ export type Client = {
   name: string;
   arc_id: number | null;
   routing_mode: string;
-  alertacall_contact: string;
+  contact_id: number | null;
   notes: string | null;
 };
 
@@ -21,7 +21,7 @@ export type Cohort = {
   status: string;
   arc_id: number | null;
   routing_mode: string | null;
-  alertacall_contact: string | null;
+  contact_id: number | null;
   notes: string | null;
   client_name?: string;
 };
