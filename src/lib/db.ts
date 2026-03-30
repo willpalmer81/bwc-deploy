@@ -18,7 +18,6 @@ export type Cohort = {
   id: number;
   client_id: number;
   name: string;
-  status: string;
   arc_id: number | null;
   routing_mode: string | null;
   contact_id: number | null;

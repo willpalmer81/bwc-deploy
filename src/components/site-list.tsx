@@ -317,11 +317,6 @@ export function SiteList() {
               apiEndpoint="/api/cohorts"
               quickFields={[
                 { key: "name", label: "Name", placeholder: "e.g. Cohort 1" },
-                { key: "status", label: "Status", type: "select", options: [
-                  { value: "planning", label: "Planning" },
-                  { value: "in_progress", label: "In Progress" },
-                  { value: "complete", label: "Complete" },
-                ]},
               ]}
               extraPayload={form.client_id ? { client_id: parseInt(form.client_id) } : undefined}
               onCreated={() => fetch("/api/cohorts").then((r) => r.json()).then(setCohorts)}

@@ -52,7 +52,6 @@ async function seed() {
       id SERIAL PRIMARY KEY,
       client_id INTEGER NOT NULL REFERENCES clients(id),
       name TEXT NOT NULL,
-      status TEXT NOT NULL,
       arc_id INTEGER REFERENCES arcs(id),
       routing_mode TEXT,
       contact_id INTEGER REFERENCES people(id),

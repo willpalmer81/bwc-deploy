@@ -26,10 +26,10 @@ export async function GET() {
 export async function POST(request: Request) {
   const sql = getDb();
   const body = await request.json();
-  const { client_id, name, status, arc_id, routing_mode, contact_id, notes } = body;
+  const { client_id, name, arc_id, routing_mode, contact_id, notes } = body;
   const result = await sql`
-    INSERT INTO cohorts (client_id, name, status, arc_id, routing_mode, contact_id, notes)
-    VALUES (${client_id}, ${name}, ${status}, ${arc_id || null}, ${routing_mode || null}, ${contact_id || null}, ${notes || null})
+    INSERT INTO cohorts (client_id, name, arc_id, routing_mode, contact_id, notes)
+    VALUES (${client_id}, ${name}, ${arc_id || null}, ${routing_mode || null}, ${contact_id || null}, ${notes || null})
     RETURNING *
   `;
   return NextResponse.json(result[0], { status: 201 });

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { StatusBadge } from "./status-badge";
 import { Modal, FormField, inputClass, selectClass, btnPrimary, btnDanger, btnSecondary } from "./modal";
 import { SelectWithCreate } from "./select-with-create";
 
@@ -9,7 +8,6 @@ type CohortRow = {
   id: number;
   client_id: number;
   name: string;
-  status: string;
   arc_id: number | null;
   arc_name: string | null;
   routing_mode: string | null;
@@ -29,7 +27,6 @@ type ArcOption = { id: number; name: string };
 const emptyCohort = {
   client_id: "",
   name: "",
-  status: "planning",
   arc_id: "",
   routing_mode: "",
   contact_id: "",
@@ -75,7 +72,6 @@ export function CohortList() {
     setForm({
       client_id: String(cohort.client_id),
       name: cohort.name,
-      status: cohort.status,
       arc_id: cohort.arc_id ? String(cohort.arc_id) : "",
       routing_mode: cohort.routing_mode ?? "",
       contact_id: cohort.contact_id ? String(cohort.contact_id) : "",
@@ -147,7 +143,6 @@ export function CohortList() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3">
                       <h2 className="font-display text-lg font-semibold text-zinc-100">{cohort.name}</h2>
-                      <StatusBadge status={cohort.status} />
                     </div>
                     <p className="text-sm text-zinc-500 mt-1">
                       {cohort.client_name} &middot; {cohort.site_count} sites
@@ -226,14 +221,6 @@ export function CohortList() {
         <FormField label="Name">
           <input className={inputClass} value={form.name} onChange={set("name")} placeholder="e.g. Cohort 1" />
         </FormField>
-        <FormField label="Status">
-          <select className={selectClass} value={form.status} onChange={set("status")}>
-            <option value="planning">Planning</option>
-            <option value="in_progress">In Progress</option>
-            <option value="complete">Complete</option>
-          </select>
-        </FormField>
-
         <div className="mt-6 mb-4 border-t border-zinc-800/60 pt-4">
           <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">
             Config Overrides
