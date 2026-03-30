@@ -237,10 +237,10 @@ export function SiteList() {
                     </td>
                     <td className="px-5 py-3"><StatusBadge status={site.status} /></td>
                     <td className="px-5 py-3">
-                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => copyAddress(site)}
-                          className={`px-2 py-1 text-xs rounded border transition-colors ${
+                          className={`min-w-[44px] min-h-[44px] flex items-center justify-center px-2.5 text-xs rounded border transition-colors ${
                             copiedId === site.id
                               ? "text-emerald-400 bg-emerald-600/10 border-emerald-600/20"
                               : "text-zinc-400 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 border-zinc-700/60"
@@ -250,13 +250,13 @@ export function SiteList() {
                         </button>
                         <button
                           onClick={() => openEdit(site)}
-                          className="px-2 py-1 text-xs text-zinc-400 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 rounded border border-zinc-700/60 transition-colors"
+                          className="min-w-[44px] min-h-[44px] flex items-center justify-center px-2.5 text-xs text-zinc-400 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 rounded border border-zinc-700/60 transition-colors"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => setDeleting(site)}
-                          className="px-2 py-1 text-xs text-rose-400 hover:text-rose-300 bg-rose-600/10 hover:bg-rose-600/20 rounded border border-rose-600/20 transition-colors"
+                          className="min-w-[44px] min-h-[44px] flex items-center justify-center px-2.5 text-xs text-rose-400 hover:text-rose-300 bg-rose-600/10 hover:bg-rose-600/20 rounded border border-rose-600/20 transition-colors"
                         >
                           Del
                         </button>
