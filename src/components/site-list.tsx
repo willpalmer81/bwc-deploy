@@ -214,8 +214,10 @@ export function SiteList() {
                 </tr>
               ) : sites.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-zinc-500">
-                    No sites found
+                  <td colSpan={8} className="px-5 py-16 text-center">
+                    <p className="text-zinc-500 mb-1">No sites match your filters</p>
+                    <p className="text-xs text-zinc-600 mb-4">Try adjusting your search or filters, or add a new site.</p>
+                    <button onClick={openCreate} className={`${btnPrimary} text-xs`}>+ Add Site</button>
                   </td>
                 </tr>
               ) : (

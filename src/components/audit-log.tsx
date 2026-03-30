@@ -40,8 +40,9 @@ export function AuditLog() {
 
   if (logs.length === 0) {
     return (
-      <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-12 text-center">
-        <p className="text-zinc-500">No activity yet</p>
+      <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-16 text-center">
+        <p className="text-zinc-500 mb-1">No activity recorded yet</p>
+        <p className="text-xs text-zinc-600">Create, edit, or delete any entity and it will appear here.</p>
       </div>
     );
   }
