@@ -176,16 +176,16 @@ export function CohortList() {
                       </div>
                     )}
                   </div>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity ml-4">
+                  <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity ml-4">
                     <button
                       onClick={() => openEdit(cohort)}
-                      className="px-2.5 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 rounded-md border border-zinc-700/60 transition-colors"
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center px-2.5 text-xs text-zinc-400 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 rounded-md border border-zinc-700/60 transition-colors"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => setDeleting(cohort)}
-                      className="px-2.5 py-1.5 text-xs text-rose-400 hover:text-rose-300 bg-rose-600/10 hover:bg-rose-600/20 rounded-md border border-rose-600/20 transition-colors"
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center px-2.5 text-xs text-rose-400 hover:text-rose-300 bg-rose-600/10 hover:bg-rose-600/20 rounded-md border border-rose-600/20 transition-colors"
                     >
                       Delete
                     </button>
