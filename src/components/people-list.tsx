@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Modal, FormField, inputClass, btnPrimary, btnDanger, btnSecondary } from "./modal";
+import { Modal, FormField, inputClass, selectClass, btnPrimary, btnDanger, btnSecondary } from "./modal";
+import { SelectWithCreate } from "./select-with-create";
 
 type PersonRow = {
   id: number;
@@ -9,13 +10,19 @@ type PersonRow = {
   email: string | null;
   phone: string | null;
   role: string | null;
+  org_id: number | null;
+  org_name: string | null;
+  org_type: string | null;
   notes: string | null;
 };
 
-const emptyForm = { name: "", email: "", phone: "", role: "", notes: "" };
+type OrgOption = { id: number; name: string };
+
+const emptyForm = { name: "", email: "", phone: "", role: "", org_id: "", notes: "" };
 
 export function PeopleList() {
   const [people, setPeople] = useState<PersonRow[]>([]);
+  const [orgs, setOrgs] = useState<OrgOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<PersonRow | null>(null);
@@ -23,9 +30,10 @@ export function PeopleList() {
   const [deleting, setDeleting] = useState<PersonRow | null>(null);
 
   const load = useCallback(() => {
-    fetch("/api/people")
-      .then((r) => r.json())
-      .then((data) => { setPeople(data); setLoading(false); });
+    Promise.all([
+      fetch("/api/people").then((r) => r.json()),
+      fetch("/api/organisations").then((r) => r.json()),
+    ]).then(([p, o]) => { setPeople(p); setOrgs(o); setLoading(false); });
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -43,18 +51,23 @@ export function PeopleList() {
       email: person.email ?? "",
       phone: person.phone ?? "",
       role: person.role ?? "",
+      org_id: person.org_id ? String(person.org_id) : "",
       notes: person.notes ?? "",
     });
     setModalOpen(true);
   }
 
   async function handleSave() {
+    const payload = {
+      ...form,
+      org_id: form.org_id ? parseInt(form.org_id) : null,
+    };
     const method = editing ? "PUT" : "POST";
     const url = editing ? `/api/people/${editing.id}` : "/api/people";
     await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify(payload),
     });
     setModalOpen(false);
     load();
@@ -96,6 +109,7 @@ export function PeopleList() {
             <thead>
               <tr className="border-b border-zinc-800/80">
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Name</th>
+                <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Organisation</th>
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Role</th>
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Email</th>
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Phone</th>
@@ -106,6 +120,14 @@ export function PeopleList() {
               {people.map((person) => (
                 <tr key={person.id} className="hover:bg-zinc-800/20 transition-colors group">
                   <td className="px-5 py-3 font-medium text-zinc-200">{person.name}</td>
+                  <td className="px-5 py-3 text-zinc-400">
+                    {person.org_name ? (
+                      <span>
+                        {person.org_name}
+                        <span className="text-zinc-600 ml-1.5 text-xs">({person.org_type})</span>
+                      </span>
+                    ) : "\u2014"}
+                  </td>
                   <td className="px-5 py-3 text-zinc-400">{person.role ?? "\u2014"}</td>
                   <td className="px-5 py-3 text-zinc-400 text-xs">{person.email ?? "\u2014"}</td>
                   <td className="px-5 py-3 text-zinc-400 text-xs">{person.phone ?? "\u2014"}</td>
@@ -135,6 +157,25 @@ export function PeopleList() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? "Edit Person" : "New Person"}>
         <FormField label="Name">
           <input className={inputClass} value={form.name} onChange={set("name")} placeholder="e.g. Kerry Surman" />
+        </FormField>
+        <FormField label="Organisation">
+          <SelectWithCreate
+            value={form.org_id}
+            onChange={(v) => setForm((f) => ({ ...f, org_id: v }))}
+            options={orgs}
+            entityName="Organisation"
+            apiEndpoint="/api/organisations"
+            quickFields={[
+              { key: "name", label: "Name", placeholder: "e.g. Alertacall, Appello" },
+              { key: "type", label: "Type", type: "select", options: [
+                { value: "alertacall", label: "Alertacall" },
+                { value: "arc", label: "ARC" },
+                { value: "client", label: "Client" },
+                { value: "other", label: "Other" },
+              ]},
+            ]}
+            onCreated={() => fetch("/api/organisations").then((r) => r.json()).then(setOrgs)}
+          />
         </FormField>
         <FormField label="Role / Title">
           <input className={inputClass} value={form.role} onChange={set("role")} placeholder="e.g. Project Manager" />

@@ -1,0 +1,26 @@
+import { neon } from "@neondatabase/serverless";
+
+const DATABASE_URL =
+  process.env.DATABASE_URL ??
+  "postgresql://neondb_owner:npg_lT0EBxDtPz8L@ep-shy-boat-a9snaj4v-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require";
+
+async function migrate() {
+  const sql = neon(DATABASE_URL);
+
+  console.log("Creating organisations table...");
+  await sql`
+    CREATE TABLE IF NOT EXISTS organisations (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL DEFAULT 'other',
+      notes TEXT
+    )
+  `;
+
+  console.log("Adding org_id to people...");
+  await sql`ALTER TABLE people ADD COLUMN IF NOT EXISTS org_id INTEGER REFERENCES organisations(id)`;
+
+  console.log("Migration complete.");
+}
+
+migrate().catch(console.error);
