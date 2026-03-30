@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { UserMenu } from "./user-menu";
 
 const links = [
   { href: "/", label: "Overview" },
@@ -26,7 +27,7 @@ export function Nav() {
             BWC Deploy
           </span>
         </Link>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-1">
           {links.map((link) => {
             const active =
               link.href === "/"
@@ -47,6 +48,7 @@ export function Nav() {
             );
           })}
         </div>
+        <UserMenu />
       </div>
     </nav>
   );
