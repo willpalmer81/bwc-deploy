@@ -19,6 +19,9 @@ export type Cohort = {
   client_id: number;
   name: string;
   status: string;
+  arc: string | null;
+  routing_mode: string | null;
+  alertacall_contact: string | null;
   notes: string | null;
   client_name?: string;
 };
@@ -39,4 +42,8 @@ export type Site = {
   notes: string | null;
   client_name?: string;
   cohort_name?: string;
+  // Resolved config (effective values after inheritance)
+  effective_arc?: string;
+  effective_routing_mode?: string;
+  effective_contact?: string;
 };

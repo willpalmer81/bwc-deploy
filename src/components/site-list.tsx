@@ -20,6 +20,9 @@ type SiteRow = {
   dmp_group_name: string | null;
   dmp_group_uuid: string | null;
   notes: string | null;
+  effective_arc: string;
+  effective_routing_mode: string;
+  effective_contact: string;
 };
 
 type ClientOption = { id: number; name: string };
@@ -184,6 +187,7 @@ export function SiteList() {
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Postcode</th>
                 <th className="text-center px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Units</th>
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">DMP Group</th>
+                <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">ARC / Routing</th>
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Status</th>
                 <th className="px-5 py-3 w-24"></th>
               </tr>
@@ -191,13 +195,13 @@ export function SiteList() {
             <tbody className="divide-y divide-zinc-800/60">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center">
+                  <td colSpan={9} className="px-5 py-12 text-center">
                     <div className="w-5 h-5 border-2 border-emerald-500/30 border-t-emerald-400 rounded-full animate-spin mx-auto" />
                   </td>
                 </tr>
               ) : sites.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-zinc-500">
+                  <td colSpan={9} className="px-5 py-12 text-center text-zinc-500">
                     No sites found
                   </td>
                 </tr>
@@ -216,6 +220,10 @@ export function SiteList() {
                       {site.communal_units ? ` + ${site.communal_units}c` : ""}
                     </td>
                     <td className="px-5 py-3 font-mono text-xs text-zinc-400">{site.dmp_group_name ?? "\u2014"}</td>
+                    <td className="px-5 py-3 text-xs">
+                      <p className="text-zinc-400">{site.effective_arc}</p>
+                      <p className="text-zinc-600">{site.effective_routing_mode?.replace(/_/g, " ")}</p>
+                    </td>
                     <td className="px-5 py-3"><StatusBadge status={site.status} /></td>
                     <td className="px-5 py-3">
                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

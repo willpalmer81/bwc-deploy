@@ -9,12 +9,15 @@ export async function PUT(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const sql = getDb();
   const body = await request.json();
-  const { client_id, name, status, notes } = body;
+  const { client_id, name, status, arc, routing_mode, alertacall_contact, notes } = body;
   const result = await sql`
     UPDATE cohorts SET
       client_id = ${client_id},
       name = ${name},
       status = ${status},
+      arc = ${arc || null},
+      routing_mode = ${routing_mode || null},
+      alertacall_contact = ${alertacall_contact || null},
       notes = ${notes || null}
     WHERE id = ${parseInt(id)}
     RETURNING *

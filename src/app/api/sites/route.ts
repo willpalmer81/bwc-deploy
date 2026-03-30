@@ -11,92 +11,33 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get("status");
   const search = searchParams.get("search");
 
-  // Build conditions for the neon tagged template approach
-  // We fetch all and filter, since the dataset is small (~30 rows)
-  let sites;
+  // Fetch all with resolved config (cohort overrides client), filter in JS since dataset is small
+  const allSites = await sql`
+    SELECT s.*, c.name as client_name, co.name as cohort_name,
+      COALESCE(co.arc, c.arc) as effective_arc,
+      COALESCE(co.routing_mode, c.routing_mode) as effective_routing_mode,
+      COALESCE(co.alertacall_contact, c.alertacall_contact) as effective_contact
+    FROM sites s
+    JOIN clients c ON s.client_id = c.id
+    LEFT JOIN cohorts co ON s.cohort_id = co.id
+    ORDER BY c.name, co.name NULLS FIRST, s.name
+  `;
 
-  if (clientId && status && search) {
-    const pattern = `%${search}%`;
-    sites = await sql`
-      SELECT s.*, c.name as client_name, co.name as cohort_name
-      FROM sites s
-      JOIN clients c ON s.client_id = c.id
-      LEFT JOIN cohorts co ON s.cohort_id = co.id
-      WHERE s.client_id = ${parseInt(clientId)}
-        AND s.status = ${status}
-        AND (s.name ILIKE ${pattern} OR s.building_name ILIKE ${pattern} OR s.postcode ILIKE ${pattern})
-      ORDER BY c.name, co.name NULLS FIRST, s.name
-    `;
-  } else if (clientId && status) {
-    sites = await sql`
-      SELECT s.*, c.name as client_name, co.name as cohort_name
-      FROM sites s
-      JOIN clients c ON s.client_id = c.id
-      LEFT JOIN cohorts co ON s.cohort_id = co.id
-      WHERE s.client_id = ${parseInt(clientId)} AND s.status = ${status}
-      ORDER BY c.name, co.name NULLS FIRST, s.name
-    `;
-  } else if (clientId && search) {
-    const pattern = `%${search}%`;
-    sites = await sql`
-      SELECT s.*, c.name as client_name, co.name as cohort_name
-      FROM sites s
-      JOIN clients c ON s.client_id = c.id
-      LEFT JOIN cohorts co ON s.cohort_id = co.id
-      WHERE s.client_id = ${parseInt(clientId)}
-        AND (s.name ILIKE ${pattern} OR s.building_name ILIKE ${pattern} OR s.postcode ILIKE ${pattern})
-      ORDER BY c.name, co.name NULLS FIRST, s.name
-    `;
-  } else if (status && search) {
-    const pattern = `%${search}%`;
-    sites = await sql`
-      SELECT s.*, c.name as client_name, co.name as cohort_name
-      FROM sites s
-      JOIN clients c ON s.client_id = c.id
-      LEFT JOIN cohorts co ON s.cohort_id = co.id
-      WHERE s.status = ${status}
-        AND (s.name ILIKE ${pattern} OR s.building_name ILIKE ${pattern} OR s.postcode ILIKE ${pattern})
-      ORDER BY c.name, co.name NULLS FIRST, s.name
-    `;
-  } else if (clientId) {
-    sites = await sql`
-      SELECT s.*, c.name as client_name, co.name as cohort_name
-      FROM sites s
-      JOIN clients c ON s.client_id = c.id
-      LEFT JOIN cohorts co ON s.cohort_id = co.id
-      WHERE s.client_id = ${parseInt(clientId)}
-      ORDER BY c.name, co.name NULLS FIRST, s.name
-    `;
-  } else if (status) {
-    sites = await sql`
-      SELECT s.*, c.name as client_name, co.name as cohort_name
-      FROM sites s
-      JOIN clients c ON s.client_id = c.id
-      LEFT JOIN cohorts co ON s.cohort_id = co.id
-      WHERE s.status = ${status}
-      ORDER BY c.name, co.name NULLS FIRST, s.name
-    `;
-  } else if (search) {
-    const pattern = `%${search}%`;
-    sites = await sql`
-      SELECT s.*, c.name as client_name, co.name as cohort_name
-      FROM sites s
-      JOIN clients c ON s.client_id = c.id
-      LEFT JOIN cohorts co ON s.cohort_id = co.id
-      WHERE s.name ILIKE ${pattern} OR s.building_name ILIKE ${pattern} OR s.postcode ILIKE ${pattern}
-      ORDER BY c.name, co.name NULLS FIRST, s.name
-    `;
-  } else {
-    sites = await sql`
-      SELECT s.*, c.name as client_name, co.name as cohort_name
-      FROM sites s
-      JOIN clients c ON s.client_id = c.id
-      LEFT JOIN cohorts co ON s.cohort_id = co.id
-      ORDER BY c.name, co.name NULLS FIRST, s.name
-    `;
-  }
+  const filtered = allSites.filter((site) => {
+    if (clientId && site.client_id !== parseInt(clientId)) return false;
+    if (status && site.status !== status) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      const match =
+        site.name?.toLowerCase().includes(q) ||
+        site.building_name?.toLowerCase().includes(q) ||
+        site.postcode?.toLowerCase().includes(q);
+      if (!match) return false;
+    }
+    return true;
+  });
 
-  return NextResponse.json(sites);
+  return NextResponse.json(filtered);
 }
 
 export async function POST(request: Request) {

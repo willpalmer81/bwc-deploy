@@ -9,14 +9,28 @@ type CohortRow = {
   client_id: number;
   name: string;
   status: string;
+  arc: string | null;
+  routing_mode: string | null;
+  alertacall_contact: string | null;
   notes: string | null;
   client_name: string;
+  client_arc: string;
+  client_routing_mode: string;
+  client_alertacall_contact: string;
   site_count: number;
 };
 
-type ClientOption = { id: number; name: string };
+type ClientOption = { id: number; name: string; arc: string; routing_mode: string; alertacall_contact: string };
 
-const emptyCohort = { client_id: "", name: "", status: "planning", notes: "" };
+const emptyCohort = {
+  client_id: "",
+  name: "",
+  status: "planning",
+  arc: "",
+  routing_mode: "",
+  alertacall_contact: "",
+  notes: "",
+};
 
 export function CohortList() {
   const [cohorts, setCohorts] = useState<CohortRow[]>([]);
@@ -52,6 +66,9 @@ export function CohortList() {
       client_id: String(cohort.client_id),
       name: cohort.name,
       status: cohort.status,
+      arc: cohort.arc ?? "",
+      routing_mode: cohort.routing_mode ?? "",
+      alertacall_contact: cohort.alertacall_contact ?? "",
       notes: cohort.notes ?? "",
     });
     setModalOpen(true);
@@ -80,6 +97,9 @@ export function CohortList() {
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [field]: e.target.value }));
 
+  // Get client defaults for placeholder hints
+  const selectedClient = clients.find((c) => c.id === parseInt(form.client_id));
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -102,41 +122,66 @@ export function CohortList() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {cohorts.map((cohort) => (
-            <div
-              key={cohort.id}
-              className="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-5 hover:border-zinc-700/60 transition-colors group"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <h2 className="font-display text-lg font-semibold text-zinc-100">{cohort.name}</h2>
-                    <StatusBadge status={cohort.status} />
+          {cohorts.map((cohort) => {
+            const hasOverrides = cohort.arc || cohort.routing_mode || cohort.alertacall_contact;
+            return (
+              <div
+                key={cohort.id}
+                className="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-5 hover:border-zinc-700/60 transition-colors group"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3">
+                      <h2 className="font-display text-lg font-semibold text-zinc-100">{cohort.name}</h2>
+                      <StatusBadge status={cohort.status} />
+                    </div>
+                    <p className="text-sm text-zinc-500 mt-1">
+                      {cohort.client_name} &middot; {cohort.site_count} sites
+                    </p>
+                    {hasOverrides && (
+                      <div className="flex flex-wrap gap-x-5 gap-y-1 mt-2 text-xs">
+                        {cohort.arc && (
+                          <span className="text-amber-400/80">
+                            ARC: {cohort.arc}
+                            <span className="text-zinc-600 ml-1">(overrides {cohort.client_arc})</span>
+                          </span>
+                        )}
+                        {cohort.routing_mode && (
+                          <span className="text-amber-400/80">
+                            Routing: {cohort.routing_mode.replace(/_/g, " ")}
+                            <span className="text-zinc-600 ml-1">(overrides {cohort.client_routing_mode.replace(/_/g, " ")})</span>
+                          </span>
+                        )}
+                        {cohort.alertacall_contact && (
+                          <span className="text-amber-400/80">
+                            Contact: {cohort.alertacall_contact}
+                            <span className="text-zinc-600 ml-1">(overrides {cohort.client_alertacall_contact})</span>
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <p className="text-sm text-zinc-500 mt-1">
-                    {cohort.client_name} &middot; {cohort.site_count} sites
-                  </p>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity ml-4">
+                    <button
+                      onClick={() => openEdit(cohort)}
+                      className="px-2.5 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 rounded-md border border-zinc-700/60 transition-colors"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setDeleting(cohort)}
+                      className="px-2.5 py-1.5 text-xs text-rose-400 hover:text-rose-300 bg-rose-600/10 hover:bg-rose-600/20 rounded-md border border-rose-600/20 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => openEdit(cohort)}
-                    className="px-2.5 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 rounded-md border border-zinc-700/60 transition-colors"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => setDeleting(cohort)}
-                    className="px-2.5 py-1.5 text-xs text-rose-400 hover:text-rose-300 bg-rose-600/10 hover:bg-rose-600/20 rounded-md border border-rose-600/20 transition-colors"
-                  >
-                    Delete
-                  </button>
-                </div>
+                {cohort.notes && (
+                  <p className="mt-2 text-sm text-zinc-500 border-t border-zinc-800/60 pt-2">{cohort.notes}</p>
+                )}
               </div>
-              {cohort.notes && (
-                <p className="mt-2 text-sm text-zinc-500 border-t border-zinc-800/60 pt-2">{cohort.notes}</p>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -159,6 +204,44 @@ export function CohortList() {
             <option value="complete">Complete</option>
           </select>
         </FormField>
+
+        {/* Override section */}
+        <div className="mt-6 mb-4 border-t border-zinc-800/60 pt-4">
+          <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">
+            Config Overrides
+          </p>
+          <p className="text-xs text-zinc-600 mb-4">
+            Leave blank to inherit from client{selectedClient ? ` (${selectedClient.name})` : ""}
+          </p>
+        </div>
+
+        <FormField label="ARC Provider">
+          <input
+            className={inputClass}
+            value={form.arc}
+            onChange={set("arc")}
+            placeholder={selectedClient ? `Inherited: ${selectedClient.arc}` : "Select a client first"}
+          />
+        </FormField>
+        <FormField label="Routing Mode">
+          <select className={selectClass} value={form.routing_mode} onChange={set("routing_mode")}>
+            <option value="">
+              {selectedClient ? `Inherited: ${selectedClient.routing_mode.replace(/_/g, " ")}` : "Inherit from client"}
+            </option>
+            <option value="direct_to_arc">Direct to ARC</option>
+            <option value="via_skyresponse">Via Skyresponse</option>
+            <option value="TBC">TBC</option>
+          </select>
+        </FormField>
+        <FormField label="Alertacall Contact">
+          <input
+            className={inputClass}
+            value={form.alertacall_contact}
+            onChange={set("alertacall_contact")}
+            placeholder={selectedClient ? `Inherited: ${selectedClient.alertacall_contact}` : "Select a client first"}
+          />
+        </FormField>
+
         <FormField label="Notes">
           <textarea className={inputClass} rows={2} value={form.notes} onChange={set("notes")} placeholder="Optional..." />
         </FormField>

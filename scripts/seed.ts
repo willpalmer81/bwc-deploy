@@ -31,6 +31,9 @@ async function seed() {
       client_id INTEGER NOT NULL REFERENCES clients(id),
       name TEXT NOT NULL,
       status TEXT NOT NULL,
+      arc TEXT,
+      routing_mode TEXT,
+      alertacall_contact TEXT,
       notes TEXT
     )
   `;
