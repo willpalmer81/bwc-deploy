@@ -51,3 +51,12 @@ export type Site = {
   effective_routing_mode?: string;
   effective_contact?: string;
 };
+
+export type ProductProperty = {
+  id: number;
+  product_id: number;
+  name: string;
+  label: string;
+  unit: string | null;
+  sort_order: number;
+};

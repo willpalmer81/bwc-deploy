@@ -4,73 +4,101 @@ import { useEffect, useState, useCallback } from "react";
 import { Modal, FormField, inputClass, btnPrimary, btnDanger, btnSecondary } from "./modal";
 import { SelectWithCreate } from "./select-with-create";
 
+type PropertyValue = {
+  property_id: number;
+  name: string;
+  label: string;
+  unit: string | null;
+  value: string;
+};
+
 type SiteProductRow = {
   id: number;
   site_id: number;
   product_id: number;
   product_name: string;
-  product_category: string | null;
-  residential_qty: number;
-  communal_qty: number;
-  external_qty: number;
+  product_type: string | null;
   notes: string | null;
+  values: PropertyValue[];
 };
 
-type ProductRaw = { id: number; model_name: string };
+type ProductProperty = {
+  id: number;
+  product_id: number;
+  name: string;
+  label: string;
+  unit: string | null;
+  sort_order: number;
+};
+
+type ProductRaw = {
+  id: number;
+  model_name: string;
+  properties: ProductProperty[];
+};
 type ProductOption = { id: number; name: string };
-
-const emptyForm = {
-  product_id: "",
-  residential_qty: "0",
-  communal_qty: "0",
-  external_qty: "0",
-  notes: "",
-};
 
 export function SiteProducts({ siteId }: { siteId: number }) {
   const [items, setItems] = useState<SiteProductRow[]>([]);
-  const [products, setProducts] = useState<ProductOption[]>([]);
+  const [products, setProducts] = useState<ProductRaw[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<SiteProductRow | null>(null);
-  const [form, setForm] = useState(emptyForm);
+  const [formProductId, setFormProductId] = useState("");
+  const [formNotes, setFormNotes] = useState("");
+  const [formValues, setFormValues] = useState<Record<number, string>>({});
   const [deleting, setDeleting] = useState<SiteProductRow | null>(null);
 
   const load = useCallback(() => {
     Promise.all([
       fetch(`/api/site-products?site_id=${siteId}`).then((r) => r.json()),
-      fetch("/api/products").then((r) => r.json()).then((ps: ProductRaw[]) => ps.map((p) => ({ id: p.id, name: p.model_name }))),
+      fetch("/api/products").then((r) => r.json()),
     ]).then(([sp, p]) => { setItems(sp); setProducts(p); setLoading(false); });
   }, [siteId]);
 
   useEffect(() => { load(); }, [load]);
 
+  const selectedProduct = products.find((p) => p.id === parseInt(formProductId));
+  const productOptions: ProductOption[] = products.map((p) => ({ id: p.id, name: p.model_name }));
+
   function openAdd() {
     setEditing(null);
-    setForm(emptyForm);
+    setFormProductId("");
+    setFormNotes("");
+    setFormValues({});
     setModalOpen(true);
   }
 
   function openEdit(item: SiteProductRow) {
     setEditing(item);
-    setForm({
-      product_id: String(item.product_id),
-      residential_qty: String(item.residential_qty),
-      communal_qty: String(item.communal_qty),
-      external_qty: String(item.external_qty),
-      notes: item.notes ?? "",
-    });
+    setFormProductId(String(item.product_id));
+    setFormNotes(item.notes ?? "");
+    const vals: Record<number, string> = {};
+    for (const v of item.values) {
+      vals[v.property_id] = v.value;
+    }
+    setFormValues(vals);
     setModalOpen(true);
   }
 
+  function handleProductChange(productId: string) {
+    setFormProductId(productId);
+    // Reset values when product changes (properties are different)
+    if (!editing) setFormValues({});
+  }
+
   async function handleSave() {
+    const product = products.find((p) => p.id === parseInt(formProductId));
+    const values = (product?.properties ?? []).map((prop) => ({
+      property_id: prop.id,
+      value: formValues[prop.id] ?? "0",
+    }));
+
     const payload = {
       site_id: siteId,
-      product_id: parseInt(form.product_id),
-      residential_qty: parseInt(form.residential_qty) || 0,
-      communal_qty: parseInt(form.communal_qty) || 0,
-      external_qty: parseInt(form.external_qty) || 0,
-      notes: form.notes,
+      product_id: parseInt(formProductId),
+      values,
+      notes: formNotes,
     };
     const method = editing ? "PUT" : "POST";
     const url = editing ? `/api/site-products/${editing.id}` : "/api/site-products";
@@ -90,16 +118,21 @@ export function SiteProducts({ siteId }: { siteId: number }) {
     load();
   }
 
-  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm((f) => ({ ...f, [field]: e.target.value }));
-
   if (loading) {
     return <div className="text-xs text-zinc-500 py-2">Loading products...</div>;
   }
 
-  const totalRes = items.reduce((s, i) => s + i.residential_qty, 0);
-  const totalCom = items.reduce((s, i) => s + i.communal_qty, 0);
-  const totalExt = items.reduce((s, i) => s + i.external_qty, 0);
+  // Summary line: aggregate all values across all items
+  const totalsByLabel: Record<string, number> = {};
+  for (const item of items) {
+    for (const v of item.values) {
+      const num = parseInt(v.value) || 0;
+      if (num > 0) {
+        totalsByLabel[v.label] = (totalsByLabel[v.label] ?? 0) + num;
+      }
+    }
+  }
+  const summaryParts = Object.entries(totalsByLabel).map(([label, total]) => `${total} ${label}`);
 
   return (
     <>
@@ -107,9 +140,9 @@ export function SiteProducts({ siteId }: { siteId: number }) {
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
             Products
-            {items.length > 0 && (
+            {summaryParts.length > 0 && (
               <span className="text-zinc-600 ml-2 normal-case">
-                ({totalRes}R {totalCom}C {totalExt}E = {totalRes + totalCom + totalExt} total)
+                ({summaryParts.join(" \u00b7 ")})
               </span>
             )}
           </p>
@@ -132,9 +165,14 @@ export function SiteProducts({ siteId }: { siteId: number }) {
               >
                 <div className="flex-1 min-w-0">
                   <span className="text-sm text-zinc-200">{item.product_name}</span>
-                  <span className="text-xs text-zinc-500 ml-3 font-mono">
-                    {item.residential_qty}R &middot; {item.communal_qty}C &middot; {item.external_qty}E
-                  </span>
+                  {item.values.length > 0 && (
+                    <span className="text-xs text-zinc-500 ml-3 font-mono">
+                      {item.values
+                        .filter((v) => parseInt(v.value) > 0)
+                        .map((v) => `${v.value} ${v.label}`)
+                        .join(" \u00b7 ")}
+                    </span>
+                  )}
                 </div>
                 <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
@@ -159,35 +197,52 @@ export function SiteProducts({ siteId }: { siteId: number }) {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? "Edit Product Assignment" : "Add Product"}>
         <FormField label="Product">
           <SelectWithCreate
-            value={form.product_id}
-            onChange={(v) => setForm((f) => ({ ...f, product_id: v }))}
-            options={products}
+            value={formProductId}
+            onChange={handleProductChange}
+            options={productOptions}
             entityName="Product"
             apiEndpoint="/api/products"
             quickFields={[
               { key: "model_name", label: "Model Name", placeholder: "e.g. Anya Cariss Unit" },
-              { key: "description", label: "Description", placeholder: "e.g. Dispersed alarm unit" },
             ]}
             onCreated={() => fetch("/api/products").then((r) => r.json()).then(setProducts)}
           />
         </FormField>
-        <div className="grid grid-cols-3 gap-3">
-          <FormField label="Residential">
-            <input className={inputClass} type="number" min="0" value={form.residential_qty} onChange={set("residential_qty")} />
-          </FormField>
-          <FormField label="Communal">
-            <input className={inputClass} type="number" min="0" value={form.communal_qty} onChange={set("communal_qty")} />
-          </FormField>
-          <FormField label="External">
-            <input className={inputClass} type="number" min="0" value={form.external_qty} onChange={set("external_qty")} />
-          </FormField>
-        </div>
+
+        {selectedProduct && selectedProduct.properties.length > 0 && (
+          <div className={`grid gap-3 ${selectedProduct.properties.length <= 3 ? `grid-cols-${selectedProduct.properties.length}` : "grid-cols-3"}`}>
+            {selectedProduct.properties.map((prop) => (
+              <FormField key={prop.id} label={`${prop.label}${prop.unit ? ` (${prop.unit})` : ""}`}>
+                <input
+                  className={inputClass}
+                  type="number"
+                  min="0"
+                  value={formValues[prop.id] ?? "0"}
+                  onChange={(e) => setFormValues((v) => ({ ...v, [prop.id]: e.target.value }))}
+                />
+              </FormField>
+            ))}
+          </div>
+        )}
+
+        {selectedProduct && selectedProduct.properties.length === 0 && (
+          <p className="text-xs text-zinc-500 mb-4">
+            This product has no properties defined. Edit the product to add quantity fields.
+          </p>
+        )}
+
         <FormField label="Notes">
-          <textarea className={inputClass} rows={2} value={form.notes} onChange={set("notes")} placeholder="Optional..." />
+          <textarea
+            className={inputClass}
+            rows={2}
+            value={formNotes}
+            onChange={(e) => setFormNotes(e.target.value)}
+            placeholder="Optional..."
+          />
         </FormField>
         <div className="flex gap-3 justify-end mt-4">
           <button onClick={() => setModalOpen(false)} className={btnSecondary}>Cancel</button>
-          <button onClick={handleSave} className={btnPrimary} disabled={!form.product_id}>
+          <button onClick={handleSave} className={btnPrimary} disabled={!formProductId}>
             {editing ? "Save" : "Add Product"}
           </button>
         </div>
