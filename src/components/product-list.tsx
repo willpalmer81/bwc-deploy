@@ -7,8 +7,7 @@ import { SelectWithCreate } from "./select-with-create";
 type ProductRow = {
   id: number;
   model_name: string;
-  description: string | null;
-  category: string | null;
+  type: string | null;
   manufacturer_org_id: number | null;
   manufacturer_name: string | null;
   notes: string | null;
@@ -16,7 +15,7 @@ type ProductRow = {
 
 type OrgOption = { id: number; name: string; type: string };
 
-const emptyForm = { model_name: "", description: "", category: "", manufacturer_org_id: "", notes: "" };
+const emptyForm = { model_name: "", type: "", manufacturer_org_id: "", notes: "" };
 
 export function ProductList() {
   const [products, setProducts] = useState<ProductRow[]>([]);
@@ -48,8 +47,7 @@ export function ProductList() {
     setEditing(product);
     setForm({
       model_name: product.model_name,
-      description: product.description ?? "",
-      category: product.category ?? "",
+      type: product.type ?? "",
       manufacturer_org_id: product.manufacturer_org_id ? String(product.manufacturer_org_id) : "",
       notes: product.notes ?? "",
     });
@@ -113,20 +111,17 @@ export function ProductList() {
                 <div>
                   <div className="flex items-center gap-3">
                     <h2 className="font-display text-lg font-semibold text-zinc-100">{product.model_name}</h2>
-                    {product.category && (
+                    {product.type && (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-zinc-800 text-zinc-400 border-zinc-700">
-                        {product.category}
+                        {product.type}
                       </span>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-x-6 gap-y-1 mt-1 text-sm text-zinc-500">
-                    {product.manufacturer_name && (
-                      <span>Manufacturer: <span className="text-zinc-300">{product.manufacturer_name}</span></span>
-                    )}
-                    {product.description && (
-                      <span>{product.description}</span>
-                    )}
-                  </div>
+                  {product.manufacturer_name && (
+                    <p className="text-sm text-zinc-500 mt-1">
+                      by <span className="text-zinc-400">{product.manufacturer_name}</span>
+                    </p>
+                  )}
                 </div>
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
@@ -155,6 +150,9 @@ export function ProductList() {
         <FormField label="Model Name">
           <input className={inputClass} value={form.model_name} onChange={set("model_name")} placeholder="e.g. Anya Cariss Unit" />
         </FormField>
+        <FormField label="Type">
+          <input className={inputClass} value={form.type} onChange={set("type")} placeholder="e.g. Dispersed alarm, Sensor, Hub" />
+        </FormField>
         <FormField label="Manufacturer">
           <SelectWithCreate
             value={form.manufacturer_org_id}
@@ -168,12 +166,6 @@ export function ProductList() {
             extraPayload={{ type: "manufacturer" }}
             onCreated={load}
           />
-        </FormField>
-        <FormField label="Description">
-          <input className={inputClass} value={form.description} onChange={set("description")} placeholder="e.g. Dispersed alarm unit" />
-        </FormField>
-        <FormField label="Category">
-          <input className={inputClass} value={form.category} onChange={set("category")} placeholder="e.g. Alarm, Sensor, Hub" />
         </FormField>
         <FormField label="Notes">
           <textarea className={inputClass} rows={2} value={form.notes} onChange={set("notes")} placeholder="Optional..." />

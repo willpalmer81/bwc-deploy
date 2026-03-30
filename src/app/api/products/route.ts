@@ -18,10 +18,10 @@ export async function GET() {
 export async function POST(request: Request) {
   const sql = getDb();
   const body = await request.json();
-  const { model_name, description, category, manufacturer_org_id, notes } = body;
+  const { model_name, type, manufacturer_org_id, notes } = body;
   const result = await sql`
-    INSERT INTO products (model_name, description, category, manufacturer_org_id, notes)
-    VALUES (${model_name}, ${description || null}, ${category || null}, ${manufacturer_org_id || null}, ${notes || null})
+    INSERT INTO products (model_name, type, manufacturer_org_id, notes)
+    VALUES (${model_name}, ${type || null}, ${manufacturer_org_id || null}, ${notes || null})
     RETURNING *
   `;
   await audit({ action: "create", entity_type: "product", entity_id: result[0].id, entity_name: model_name, changes: body });

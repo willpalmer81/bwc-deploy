@@ -10,11 +10,11 @@ export async function PUT(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const sql = getDb();
   const body = await request.json();
-  const { model_name, description, category, manufacturer_org_id, notes } = body;
+  const { model_name, type, manufacturer_org_id, notes } = body;
   const result = await sql`
     UPDATE products SET
-      model_name = ${model_name}, description = ${description || null},
-      category = ${category || null}, manufacturer_org_id = ${manufacturer_org_id || null},
+      model_name = ${model_name}, type = ${type || null},
+      manufacturer_org_id = ${manufacturer_org_id || null},
       notes = ${notes || null}
     WHERE id = ${parseInt(id)}
     RETURNING *
