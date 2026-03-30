@@ -19,17 +19,17 @@ export function Nav() {
   const pathname = usePathname();
 
   return (
-    <nav className="border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-6 flex items-center h-16 gap-10">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
-            <span className="text-emerald-400 font-display font-bold text-sm">B</span>
+    <nav className="border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-50" aria-label="Main navigation">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center h-14 sm:h-16 gap-4 sm:gap-10">
+        <Link href="/" className="flex items-center gap-2 sm:gap-3 group flex-shrink-0">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+            <span className="text-emerald-400 font-display font-bold text-xs sm:text-sm">B</span>
           </div>
-          <span className="font-display font-semibold text-zinc-100 tracking-tight">
+          <span className="font-display font-semibold text-zinc-100 tracking-tight text-sm sm:text-base">
             BWC Deploy
           </span>
         </Link>
-        <div className="flex items-center gap-1 flex-1">
+        <div className="flex items-center gap-1 flex-1 overflow-x-auto scrollbar-hide">
           {links.map((link) => {
             const active =
               link.href === "/"
