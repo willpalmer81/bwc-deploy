@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { audit } from "@/lib/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -40,5 +41,6 @@ export async function POST(request: Request) {
     `;
   }
 
+  await audit({ action: "create", entity_type: "organisation", entity_id: org.id, entity_name: name, changes: body });
   return NextResponse.json(org, { status: 201 });
 }

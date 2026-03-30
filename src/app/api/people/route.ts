@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { audit } from "@/lib/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -23,5 +24,6 @@ export async function POST(request: Request) {
     VALUES (${name}, ${email || null}, ${phone || null}, ${role || null}, ${org_id || null}, ${notes || null})
     RETURNING *
   `;
+  await audit({ action: "create", entity_type: "person", entity_id: result[0].id, entity_name: name, changes: body });
   return NextResponse.json(result[0], { status: 201 });
 }

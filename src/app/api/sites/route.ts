@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { audit } from "@/lib/audit";
 import { NextResponse } from "next/server";
 import { type NextRequest } from "next/server";
 
@@ -60,5 +61,6 @@ export async function POST(request: Request) {
       ${status}, ${notes || null})
     RETURNING *
   `;
+  await audit({ action: "create", entity_type: "site", entity_id: result[0].id, entity_name: name, changes: body });
   return NextResponse.json(result[0], { status: 201 });
 }

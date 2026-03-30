@@ -11,6 +11,7 @@ const links = [
   { href: "/sites", label: "Sites" },
   { href: "/people", label: "People" },
   { href: "/ac-sites", label: "AC Sites" },
+  { href: "/audit", label: "Audit" },
 ];
 
 export function Nav() {

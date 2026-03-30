@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { audit } from "@/lib/audit";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -31,12 +32,15 @@ export async function PUT(request: Request, ctx: Ctx) {
     RETURNING *
   `;
   if (result.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  await audit({ action: "update", entity_type: "site", entity_id: parseInt(id), entity_name: name, changes: body });
   return NextResponse.json(result[0]);
 }
 
 export async function DELETE(_request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const sql = getDb();
+  const site = await sql`SELECT name FROM sites WHERE id = ${parseInt(id)}`;
   await sql`DELETE FROM sites WHERE id = ${parseInt(id)}`;
+  await audit({ action: "delete", entity_type: "site", entity_id: parseInt(id), entity_name: site[0]?.name });
   return NextResponse.json({ ok: true });
 }
