@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { StatusBadge } from "./status-badge";
 import { Modal, FormField, inputClass, selectClass, btnPrimary, btnDanger, btnSecondary } from "./modal";
 import { SelectWithCreate } from "./select-with-create";
+import { SiteProducts } from "./site-products";
 
 type SiteRow = {
   id: number;
@@ -16,8 +17,6 @@ type SiteRow = {
   status: string;
   client_name: string;
   cohort_name: string | null;
-  residential_units: number | null;
-  communal_units: number | null;
   dmp_group_name: string | null;
   dmp_group_uuid: string | null;
   notes: string | null;
@@ -36,8 +35,6 @@ const emptySite = {
   building_name: "",
   address: "",
   postcode: "",
-  residential_units: "",
-  communal_units: "",
   dmp_group_name: "",
   dmp_group_uuid: "",
   status: "planning",
@@ -112,8 +109,6 @@ export function SiteList() {
       building_name: site.building_name ?? "",
       address: site.address ?? "",
       postcode: site.postcode ?? "",
-      residential_units: site.residential_units != null ? String(site.residential_units) : "",
-      communal_units: site.communal_units != null ? String(site.communal_units) : "",
       dmp_group_name: site.dmp_group_name ?? "",
       dmp_group_uuid: site.dmp_group_uuid ?? "",
       status: site.status,
@@ -127,8 +122,6 @@ export function SiteList() {
       ...form,
       org_id: parseInt(form.org_id),
       cohort_id: form.cohort_id ? parseInt(form.cohort_id) : null,
-      residential_units: form.residential_units ? parseInt(form.residential_units) : null,
-      communal_units: form.communal_units ? parseInt(form.communal_units) : null,
     };
     const method = editing ? "PUT" : "POST";
     const url = editing ? `/api/sites/${editing.id}` : "/api/sites";
@@ -206,7 +199,6 @@ export function SiteList() {
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Client</th>
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Cohort</th>
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Postcode</th>
-                <th className="text-center px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Units</th>
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">DMP Group</th>
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">ARC / Routing</th>
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Status</th>
@@ -216,13 +208,13 @@ export function SiteList() {
             <tbody className="divide-y divide-zinc-800/60">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="px-5 py-12 text-center">
+                  <td colSpan={8} className="px-5 py-12 text-center">
                     <div className="w-5 h-5 border-2 border-emerald-500/30 border-t-emerald-400 rounded-full animate-spin mx-auto" />
                   </td>
                 </tr>
               ) : sites.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-5 py-12 text-center text-zinc-500">
+                  <td colSpan={8} className="px-5 py-12 text-center text-zinc-500">
                     No sites found
                   </td>
                 </tr>
@@ -236,10 +228,6 @@ export function SiteList() {
                     <td className="px-5 py-3 text-zinc-400">{site.client_name}</td>
                     <td className="px-5 py-3 text-zinc-500">{site.cohort_name ?? "\u2014"}</td>
                     <td className="px-5 py-3 font-mono text-xs text-zinc-400">{site.postcode ?? "\u2014"}</td>
-                    <td className="px-5 py-3 text-center font-mono text-xs text-zinc-400">
-                      {site.residential_units ?? "\u2014"}
-                      {site.communal_units ? ` + ${site.communal_units}c` : ""}
-                    </td>
                     <td className="px-5 py-3 font-mono text-xs text-zinc-400">{site.dmp_group_name ?? "\u2014"}</td>
                     <td className="px-5 py-3 text-xs">
                       <p className="text-zinc-400">{site.effective_arc}</p>
@@ -324,12 +312,6 @@ export function SiteList() {
           <FormField label="Postcode">
             <input className={inputClass} value={form.postcode} onChange={set("postcode")} placeholder="e.g. BD24 9RB" />
           </FormField>
-          <FormField label="Residential Units">
-            <input className={inputClass} type="number" value={form.residential_units} onChange={set("residential_units")} />
-          </FormField>
-          <FormField label="Communal Units">
-            <input className={inputClass} type="number" value={form.communal_units} onChange={set("communal_units")} />
-          </FormField>
           <FormField label="DMP Group Name">
             <input className={inputClass} value={form.dmp_group_name} onChange={set("dmp_group_name")} />
           </FormField>
@@ -347,6 +329,9 @@ export function SiteList() {
         <FormField label="Notes">
           <textarea className={inputClass} rows={2} value={form.notes} onChange={set("notes")} placeholder="Optional notes..." />
         </FormField>
+
+        {editing && <SiteProducts siteId={editing.id} />}
+
         <div className="flex gap-3 justify-end mt-4">
           <button onClick={() => setModalOpen(false)} className={btnSecondary}>Cancel</button>
           <button onClick={handleSave} className={btnPrimary} disabled={!form.name || !form.org_id}>

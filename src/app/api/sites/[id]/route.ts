@@ -12,7 +12,7 @@ export async function PUT(request: Request, ctx: Ctx) {
   const body = await request.json();
   const {
     org_id, cohort_id, name, building_name, address, postcode,
-    residential_units, communal_units, dmp_group_name, dmp_group_uuid, status, notes,
+    dmp_group_name, dmp_group_uuid, status, notes,
   } = body;
   const result = await sql`
     UPDATE sites SET
@@ -22,8 +22,6 @@ export async function PUT(request: Request, ctx: Ctx) {
       building_name = ${building_name || null},
       address = ${address || null},
       postcode = ${postcode || null},
-      residential_units = ${residential_units || null},
-      communal_units = ${communal_units || null},
       dmp_group_name = ${dmp_group_name || null},
       dmp_group_uuid = ${dmp_group_uuid || null},
       status = ${status},

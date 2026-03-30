@@ -9,6 +9,7 @@ const links = [
   { href: "/organisations", label: "Orgs" },
   { href: "/cohorts", label: "Cohorts" },
   { href: "/sites", label: "Sites" },
+  { href: "/products", label: "Products" },
   { href: "/people", label: "People" },
   { href: "/ac-sites", label: "AC Sites" },
   { href: "/audit", label: "Audit" },

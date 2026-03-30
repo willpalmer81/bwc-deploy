@@ -50,14 +50,14 @@ export async function POST(request: Request) {
   const body = await request.json();
   const {
     org_id, cohort_id, name, building_name, address, postcode,
-    residential_units, communal_units, dmp_group_name, dmp_group_uuid, status, notes,
+    dmp_group_name, dmp_group_uuid, status, notes,
   } = body;
   const result = await sql`
     INSERT INTO sites (org_id, cohort_id, name, building_name, address, postcode,
-      residential_units, communal_units, dmp_group_name, dmp_group_uuid, status, notes)
+      dmp_group_name, dmp_group_uuid, status, notes)
     VALUES (${org_id}, ${cohort_id || null}, ${name}, ${building_name || null},
-      ${address || null}, ${postcode || null}, ${residential_units || null},
-      ${communal_units || null}, ${dmp_group_name || null}, ${dmp_group_uuid || null},
+      ${address || null}, ${postcode || null},
+      ${dmp_group_name || null}, ${dmp_group_uuid || null},
       ${status}, ${notes || null})
     RETURNING *
   `;
