@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
   if (siteId) {
     const rows = await sql`
-      SELECT sp.*, p.name as product_name, p.category as product_category
+      SELECT sp.*, p.model_name as product_name, p.category as product_category
       FROM site_products sp
       JOIN products p ON sp.product_id = p.id
       WHERE sp.site_id = ${parseInt(siteId)}
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   }
 
   const rows = await sql`
-    SELECT sp.*, p.name as product_name, p.category as product_category
+    SELECT sp.*, p.model_name as product_name, p.category as product_category
     FROM site_products sp
     JOIN products p ON sp.product_id = p.id
     ORDER BY sp.site_id, p.name
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     VALUES (${site_id}, ${product_id}, ${residential_qty || 0}, ${communal_qty || 0}, ${external_qty || 0}, ${notes || null})
     RETURNING *
   `;
-  const product = await sql`SELECT name FROM products WHERE id = ${product_id}`;
+  const product = await sql`SELECT model_name as name FROM products WHERE id = ${product_id}`;
   await audit({ action: "create", entity_type: "site_product", entity_id: result[0].id, entity_name: product[0]?.name, changes: body });
   return NextResponse.json(result[0], { status: 201 });
 }

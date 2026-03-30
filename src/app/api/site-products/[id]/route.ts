@@ -22,7 +22,7 @@ export async function PUT(request: Request, ctx: Ctx) {
     RETURNING *
   `;
   if (result.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  const product = await sql`SELECT name FROM products WHERE id = ${product_id}`;
+  const product = await sql`SELECT model_name as name FROM products WHERE id = ${product_id}`;
   await audit({ action: "update", entity_type: "site_product", entity_id: parseInt(id), entity_name: product[0]?.name, changes: body });
   return NextResponse.json(result[0]);
 }
@@ -30,7 +30,7 @@ export async function PUT(request: Request, ctx: Ctx) {
 export async function DELETE(_request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const sql = getDb();
-  const sp = await sql`SELECT sp.id, p.name FROM site_products sp JOIN products p ON sp.product_id = p.id WHERE sp.id = ${parseInt(id)}`;
+  const sp = await sql`SELECT sp.id, p.model_name as name FROM site_products sp JOIN products p ON sp.product_id = p.id WHERE sp.id = ${parseInt(id)}`;
   await sql`DELETE FROM site_products WHERE id = ${parseInt(id)}`;
   await audit({ action: "delete", entity_type: "site_product", entity_id: parseInt(id), entity_name: sp[0]?.name });
   return NextResponse.json({ ok: true });

@@ -25,6 +25,7 @@ const ORG_TYPES = [
   { value: "alertacall", label: "Alertacall" },
   { value: "arc", label: "ARC" },
   { value: "client", label: "Client" },
+  { value: "manufacturer", label: "Manufacturer" },
   { value: "other", label: "Other" },
 ];
 
@@ -41,6 +42,7 @@ const typeBadgeStyles: Record<string, string> = {
   alertacall: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   arc: "bg-sky-500/10 text-sky-400 border-sky-500/20",
   client: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  manufacturer: "bg-violet-500/10 text-violet-400 border-violet-500/20",
   other: "bg-zinc-800 text-zinc-400 border-zinc-700",
 };
 

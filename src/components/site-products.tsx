@@ -16,6 +16,7 @@ type SiteProductRow = {
   notes: string | null;
 };
 
+type ProductRaw = { id: number; model_name: string };
 type ProductOption = { id: number; name: string };
 
 const emptyForm = {
@@ -38,7 +39,7 @@ export function SiteProducts({ siteId }: { siteId: number }) {
   const load = useCallback(() => {
     Promise.all([
       fetch(`/api/site-products?site_id=${siteId}`).then((r) => r.json()),
-      fetch("/api/products").then((r) => r.json()),
+      fetch("/api/products").then((r) => r.json()).then((ps: ProductRaw[]) => ps.map((p) => ({ id: p.id, name: p.model_name }))),
     ]).then(([sp, p]) => { setItems(sp); setProducts(p); setLoading(false); });
   }, [siteId]);
 
@@ -164,7 +165,7 @@ export function SiteProducts({ siteId }: { siteId: number }) {
             entityName="Product"
             apiEndpoint="/api/products"
             quickFields={[
-              { key: "name", label: "Name", placeholder: "e.g. Anya Cariss Unit" },
+              { key: "model_name", label: "Model Name", placeholder: "e.g. Anya Cariss Unit" },
               { key: "description", label: "Description", placeholder: "e.g. Dispersed alarm unit" },
             ]}
             onCreated={() => fetch("/api/products").then((r) => r.json()).then(setProducts)}
