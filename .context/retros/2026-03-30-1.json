@@ -1,0 +1,35 @@
+{
+  "date": "2026-03-30",
+  "window": "7d",
+  "metrics": {
+    "commits": 19,
+    "contributors": 1,
+    "prs_merged": 0,
+    "insertions": 7863,
+    "deletions": 1279,
+    "net_loc": 6584,
+    "test_loc": 0,
+    "test_ratio": 0,
+    "active_days": 1,
+    "sessions": 3,
+    "deep_sessions": 2,
+    "avg_session_minutes": 71,
+    "loc_per_session_hour": 2200,
+    "feat_pct": 0.58,
+    "fix_pct": 0.11,
+    "peak_hour": 21,
+    "ai_assisted_commits": 0
+  },
+  "authors": {
+    "willpalmer81": {
+      "commits": 19,
+      "insertions": 7863,
+      "deletions": 1279,
+      "test_ratio": 0,
+      "top_area": "src/components/"
+    }
+  },
+  "version_range": ["0.0.0", "0.0.0"],
+  "streak_days": 1,
+  "tweetable": "Mar 30: 19 commits, 7.9k LOC, 0% tests, 0 PRs, peak: 9pm | Built entire BWC tracker from scratch in one evening | Streak: 1d"
+}
