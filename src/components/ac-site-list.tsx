@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Modal, FormField, inputClass, btnPrimary, btnDanger, btnSecondary } from "./modal";
 
 type AcSiteRow = {
@@ -20,6 +20,16 @@ export function AcSiteList() {
   const [editing, setEditing] = useState<AcSiteRow | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [deleting, setDeleting] = useState<AcSiteRow | null>(null);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const copyTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  function copyAddress(site: AcSiteRow) {
+    const parts = [site.name, site.address, site.postcode].filter(Boolean);
+    navigator.clipboard.writeText(parts.join("\n"));
+    setCopiedId(site.id);
+    clearTimeout(copyTimer.current);
+    copyTimer.current = setTimeout(() => setCopiedId(null), 1500);
+  }
 
   const load = useCallback(() => {
     fetch("/api/ac-sites")
@@ -109,6 +119,16 @@ export function AcSiteList() {
                   <td className="px-5 py-3 text-zinc-500 text-xs">{site.notes ?? "\u2014"}</td>
                   <td className="px-5 py-3">
                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => copyAddress(site)}
+                        className={`px-2 py-1 text-xs rounded border transition-colors ${
+                          copiedId === site.id
+                            ? "text-emerald-400 bg-emerald-600/10 border-emerald-600/20"
+                            : "text-zinc-400 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 border-zinc-700/60"
+                        }`}
+                      >
+                        {copiedId === site.id ? "Copied" : "Addr"}
+                      </button>
                       <button
                         onClick={() => openEdit(site)}
                         className="px-2 py-1 text-xs text-zinc-400 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 rounded border border-zinc-700/60 transition-colors"

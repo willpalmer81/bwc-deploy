@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { StatusBadge } from "./status-badge";
 import { Modal, FormField, inputClass, selectClass, btnPrimary, btnDanger, btnSecondary } from "./modal";
 
@@ -53,6 +53,21 @@ export function SiteList() {
   const [editing, setEditing] = useState<SiteRow | null>(null);
   const [form, setForm] = useState(emptySite);
   const [deleting, setDeleting] = useState<SiteRow | null>(null);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const copyTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  function copyAddress(site: SiteRow) {
+    const parts = [
+      site.name,
+      site.building_name,
+      site.address,
+      site.postcode,
+    ].filter(Boolean);
+    navigator.clipboard.writeText(parts.join("\n"));
+    setCopiedId(site.id);
+    clearTimeout(copyTimer.current);
+    copyTimer.current = setTimeout(() => setCopiedId(null), 1500);
+  }
 
   const fetchSites = useCallback(() => {
     setLoading(true);
@@ -227,6 +242,16 @@ export function SiteList() {
                     <td className="px-5 py-3"><StatusBadge status={site.status} /></td>
                     <td className="px-5 py-3">
                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => copyAddress(site)}
+                          className={`px-2 py-1 text-xs rounded border transition-colors ${
+                            copiedId === site.id
+                              ? "text-emerald-400 bg-emerald-600/10 border-emerald-600/20"
+                              : "text-zinc-400 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 border-zinc-700/60"
+                          }`}
+                        >
+                          {copiedId === site.id ? "Copied" : "Addr"}
+                        </button>
                         <button
                           onClick={() => openEdit(site)}
                           className="px-2 py-1 text-xs text-zinc-400 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 rounded border border-zinc-700/60 transition-colors"
