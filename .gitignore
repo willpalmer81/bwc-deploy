@@ -7,3 +7,6 @@ out/
 .env.development.local
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel
+.env*.local
