@@ -14,3 +14,15 @@ export async function GET() {
   `;
   return NextResponse.json(cohorts);
 }
+
+export async function POST(request: Request) {
+  const sql = getDb();
+  const body = await request.json();
+  const { client_id, name, status, notes } = body;
+  const result = await sql`
+    INSERT INTO cohorts (client_id, name, status, notes)
+    VALUES (${client_id}, ${name}, ${status}, ${notes || null})
+    RETURNING *
+  `;
+  return NextResponse.json(result[0], { status: 201 });
+}
